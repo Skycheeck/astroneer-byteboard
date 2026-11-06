@@ -1,0 +1,15 @@
+# Game-derived data: regenerate with `node tools/extract.mjs` from your own install.
+/data/
+/overlay/catalog.tsv
+/overlay/taxonomy.tsv
+/overlay/icons.rgba
+
+# Build output
+/overlay/build/
+/overlay/bin/
+
+# Runtime files written by the mod and the overlay
+/ue4ss/out/*
+!/ue4ss/out/.gitkeep
+/ue4ss/in/*
+!/ue4ss/in/.gitkeep
