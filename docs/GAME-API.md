@@ -43,7 +43,7 @@ game. Names are reflection names; all native classes live under `/Script/Astro`.
 |---|---|
 | `GetCurrentItem()` | the recipe on display, as its `PickupActor` class |
 | `GetCurrentVisibleRowBlueprintIndex()`, `GetCurrentVisibleColumnBlueprintIndex()` | position in the recipe grid |
-| `GetTotalVisibleBlueprintRowsCount()`, `GetTotalVisibleBlueprintColumnCount()` | grid size (the column count depends on the row) |
+| `GetTotalVisibleBlueprintRowsCount()`, `GetTotalVisibleBlueprintColumnCount()` | grid size (the column count depends on the row); may count cells the steps skip, so a scan must not expect to reach every index (`GetRowSelectableStates`/`GetColumnSelectableStates` exist but are not used) |
 | `IncrementBlueprint(true)`, `DecrementBlueprint(true)` | next/previous variant in the row |
 | `IncrementBlueprintRow(true)`, `DecrementBlueprintRow(true)` | next/previous row; both directions wrap |
 | `GetCanPrint()` | the printer's own "can print" state (resources and power) |

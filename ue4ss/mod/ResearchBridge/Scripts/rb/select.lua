@@ -25,13 +25,21 @@
 -- step. The 20 s job limit (docs/PROTOCOL.md) therefore covers about 100 steps; a full scan of
 -- the biggest printer grid seen in game needed about 70. A resend adds its wait and its hold.
 --
+-- The grid size counts cells the printer cannot select (locked recipes, for example), and steps
+-- skip them. So no cell index is assumed to be reachable; only cells the printer landed on count.
+--
 -- Planning:
 -- * Every recipe seen is remembered per printer (by object path) with its cell, so a known recipe
 --   is reached directly ("goto"). If the remembered cell is outside the grid, holds another recipe
 --   or is not reached within rows + columns steps, the job falls back to a scan.
--- * A scan walks the unseen columns of the current row, then the nearest row with unseen cells,
---   and reports not_found only when every cell of every row has been seen.
--- * IncrementBlueprintRow's direction is learned per printer from unambiguous row moves.
+-- * A scan sweeps rows: it steps IncrementBlueprint until the printer comes back to the column the
+--   sweep of that row started on (or every column of the row has been seen), then steps
+--   IncrementBlueprintRow. Both wrap around and skip what cannot be selected, so the sweep visits
+--   every selectable cell once, whatever the step directions are. It reports not_found when a row
+--   step lands on a row already swept in this job. A column step that does not move the printer
+--   (the row has one selectable cell) ends that row's sweep after one resend.
+-- * IncrementBlueprintRow's direction is learned per printer from unambiguous row moves (goto).
+-- * When a job does not end ok, or needed many steps, the cells it saw go to events.log.
 -- The job is bound to the printer it started on, ends after 20 s or 200 sent steps, and writes
 -- exactly one result.
 -- GetCurrentItem returns the item's world actor class (its ItemType's PickupActor), not the
@@ -47,6 +55,9 @@ local M = {}
 local JOB_SECONDS = 20
 local STEP_LIMIT = 200
 local RESEND_LIMIT = 3
+local SWEEP_COLUMN_RESENDS = 1
+local TRACE_STEPS = 20
+local TRACE_LIMIT = 150
 local MIN_WAIT_TICKS = 5
 local MAX_WAIT_TICKS = 20
 local UNREADABLE = "?"
@@ -143,6 +154,9 @@ local function finish(code, detail)
         summary = summary .. ": " .. detail
     end
     protocol.logEvent("select " .. j.classPath .. ": " .. summary)
+    if code ~= "ok" or j.steps >= TRACE_STEPS then
+        protocol.logEvent("select " .. j.classPath .. ": cells " .. table.concat(j.trace, " > "))
+    end
     protocol.logCommand(j.line .. " -> " .. summary)
     local ok = code == "ok"
     local result = { id = j.id, op = "select", arg = j.classPath, ok = ok, code = code }
@@ -189,18 +203,30 @@ local function rememberedCell(grid, names)
     return nil
 end
 
+-- Adds a settled reading to the job's trace (for events.log) unless it repeats the last one.
+local function trace(j, reading)
+    if sameReading(reading, j.lastTraced) or #j.trace >= TRACE_LIMIT then
+        return
+    end
+    j.trace[#j.trace + 1] = string.format("%d,%d/%dx%d %s", reading.row, reading.col, reading.rows, reading.cols, reading.name)
+    j.lastTraced = reading
+end
+
 -- Records a settled reading: the cell counts as seen in this job and its recipe is remembered.
 local function observe(j, grid, reading)
+    trace(j, reading)
     local seenInRow = j.seen[reading.row]
     if not seenInRow then
         seenInRow = {}
         j.seen[reading.row] = seenInRow
     end
-    if not seenInRow[reading.col] and reading.name == UNREADABLE then
-        j.unreadable = j.unreadable + 1
+    if not seenInRow[reading.col] then
+        j.cellsSeen = j.cellsSeen + 1
+        if reading.name == UNREADABLE then
+            j.unreadable = j.unreadable + 1
+        end
     end
     seenInRow[reading.col] = true
-    j.colCount[reading.row] = reading.cols
     if reading.name == UNREADABLE then
         return
     end
@@ -212,36 +238,15 @@ local function observe(j, grid, reading)
     grid.cells[reading.name] = { row = reading.row, col = reading.col }
 end
 
-local function rowComplete(j, row)
-    local count = j.colCount[row]
-    local seenInRow = j.seen[row]
-    if not count or not seenInRow then
-        return false
+local function seenCount(j, row)
+    local count = 0
+    for _ in pairs(j.seen[row] or {}) do
+        count = count + 1
     end
-    for col = 0, count - 1 do
-        if not seenInRow[col] then
-            return false
-        end
-    end
-    return true
+    return count
 end
 
 -- Planning ---------------------------------------------------------------------------------------
--- The index nearest to `from` on a ring of n positions for which isDone is false; forward wins ties.
-local function nearestOpen(from, n, isDone)
-    for distance = 1, n - 1 do
-        local forward = (from + distance) % n
-        if not isDone(forward) then
-            return forward
-        end
-        local backward = (from - distance) % n
-        if not isDone(backward) then
-            return backward
-        end
-    end
-    return nil
-end
-
 local function colStepToward(reading, targetCol)
     local forward = (targetCol - reading.col) % reading.cols
     if forward <= reading.cols - forward then
@@ -293,21 +298,42 @@ local function gotoStep(j, grid, reading)
     return switchToScan(j, grid, "remembered cell holds another recipe")
 end
 
-local function scanStep(j, grid, reading)
-    local seenInRow = j.seen[reading.row] or {}
-    local col = nearestOpen(reading.col, reading.cols, function(c)
-        return seenInRow[c] == true
-    end)
-    if col then
-        return colStepToward(reading, col)
+-- True when the sweep of the row the printer is on is complete: the printer came back to the
+-- column the sweep started on, every column has been seen, or the row has one selectable cell.
+local function rowSwept(j, sweep, reading)
+    if sweep.exhausted or reading.cols <= 1 or sweep.colSteps >= reading.cols then
+        return true
     end
-    local row = nearestOpen(reading.row, reading.rows, function(r)
-        return rowComplete(j, r)
-    end)
-    if row then
-        return rowStepToward(grid, reading, row)
+    if sweep.colSteps > 0 and reading.col == sweep.startCol then
+        return true
     end
-    return nil
+    return seenCount(j, reading.row) >= reading.cols
+end
+
+-- The next sweep step, or nil when every row the printer can select has been swept.
+local function scanStep(j, reading)
+    local sweep = j.sweep
+    if sweep and sweep.row ~= reading.row then
+        -- A row step landed (or a column step left the row): the swept row is done.
+        j.sweptRows[sweep.row] = true
+        sweep = nil
+    end
+    if not sweep then
+        if j.sweptRows[reading.row] then
+            return nil
+        end
+        sweep = { row = reading.row, startCol = reading.col, colSteps = 0, exhausted = false }
+        j.sweep = sweep
+    end
+    if not rowSwept(j, sweep, reading) then
+        sweep.colSteps = sweep.colSteps + 1
+        return "col+"
+    end
+    j.sweptRows[sweep.row] = true
+    if reading.rows <= 1 then
+        return nil
+    end
+    return "row+"
 end
 
 -- The next step to send, or nil when every cell has been seen.
@@ -327,7 +353,7 @@ local function nextStep(j, grid, reading)
             return kind
         end
     end
-    return scanStep(j, grid, reading)
+    return scanStep(j, reading)
 end
 
 -- Steps ------------------------------------------------------------------------------------------
@@ -386,8 +412,23 @@ local function followStep(j, grid, printer, reading, settled)
         if step.ticksSinceSend < step.waitLimit then
             return false
         end
+        local sweeping = j.mode == "scan"
+        if sweeping and (step.kind == "col+" or step.kind == "col-") and step.resends >= SWEEP_COLUMN_RESENDS then
+            -- The row has no other selectable column; a late landing is waited out by the hold.
+            j.inFlight = nil
+            if j.sweep then
+                j.sweep.exhausted = true
+            end
+            j.hold = newHold(waitTicks(grid))
+            return true
+        end
         if step.resends >= RESEND_LIMIT then
-            finish("no_response", "the printer did not move after " .. RESEND_LIMIT .. " resends")
+            if sweeping and j.moved then
+                -- The printer moves, but not to another row: this swept row is the only one.
+                finish("not_found", "the printer has one selectable row")
+            else
+                finish("no_response", "the printer did not move after " .. RESEND_LIMIT .. " resends")
+            end
             return false
         end
         step.resends = step.resends + 1
@@ -402,6 +443,7 @@ local function followStep(j, grid, printer, reading, settled)
         return false
     end
     j.inFlight = nil
+    j.moved = true
     grid.landingTicks = step.ticksToMove
     if step.resends > 0 then
         -- A duplicate may still land, and a move it causes must not teach the row direction.
@@ -471,7 +513,7 @@ function M.step()
     end
     local kind = nextStep(j, grid, reading)
     if not kind then
-        local detail = "every cell of " .. reading.rows .. " rows was seen"
+        local detail = "swept every selectable row, " .. j.cellsSeen .. " cells seen"
         if j.unreadable > 0 then
             detail = detail .. ", " .. j.unreadable .. " of them unreadable"
         end
@@ -513,10 +555,15 @@ function M.start(cmd, printerPath, names)
         goal = goal,                -- { row, col } that goto mode heads for
         gotoSteps = 0,              -- steps planned in goto mode, capped at rows + columns
         seen = {},                  -- seen[row][col] is true for every cell read in this job
-        colCount = {},              -- colCount[row] is the column count read in that row
+        cellsSeen = 0,              -- cells in seen
         unreadable = 0,             -- seen cells whose recipe name could not be read
+        sweep = nil,                -- the row being swept: { row, startCol, colSteps, exhausted }
+        sweptRows = {},             -- sweptRows[row] is true once that row's sweep is complete
+        trace = {},                 -- settled readings, for events.log (finish)
+        lastTraced = nil,
         -- Stepping.
         steps = 0,                  -- steps sent, resends included
+        moved = false,              -- a step of this job has landed
         lastReading = nil,          -- the previous tick's reading, for the settle rule
         inFlight = nil,             -- the step on the way (startStep)
         hold = inheritedHold,       -- a quiet wait before the next decision (newHold)
