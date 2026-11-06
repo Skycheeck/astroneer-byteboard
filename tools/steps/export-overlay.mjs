@@ -1,13 +1,13 @@
 // Step 5: the files the in-game overlay reads, in the formats docs/PROTOCOL.md defines.
 // Input: context.items or data/items.json (items, groups, printers, icons); the icon pixels from context.icons,
 // or decoded from the PNGs in data/items.json when the step runs on its own.
-// Output:
-//   overlay/catalog.tsv   a '#' header line, then one item per line: id, classPath, nameRu, nameEn, group (key),
-//                         subgroup, printer (key), cost, recipe ("<count>× <name>" joined by ", "), icon (index
-//                         into icons.rgba, -1 for none), description, pickup (class path)
-//   overlay/taxonomy.tsv  "group <key> <label>" lines, then "printer <key> <category> <label> <short>" lines,
-//                         each in display order
-//   overlay/icons.rgba    the icon atlas (layout in lib/atlas.mjs), in the order of data/items.json's icons
+// Output, in mod/Byteboard/data (the folder the overlay reads in the repository):
+//   catalog.tsv   a '#' header line, then one item per line: id, classPath, nameRu, nameEn, group (key),
+//                 subgroup, printer (key), cost, recipe ("<count>× <name>" joined by ", "), icon (index
+//                 into icons.rgba, -1 for none), description, pickup (class path)
+//   taxonomy.tsv  "group <key> <label>" lines, then "printer <key> <category> <label> <short>" lines,
+//                 each in display order
+//   icons.rgba    the icon atlas (layout in lib/atlas.mjs), in the order of data/items.json's icons
 import {ICON_SIZE, buildAtlas} from '../lib/atlas.mjs';
 import {ToolError, isMainModule, runSteps, writeOutput} from '../lib/context.mjs';
 import {FILES, displayPath} from '../lib/paths.mjs';

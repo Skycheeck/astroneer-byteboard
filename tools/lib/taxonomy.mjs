@@ -1,4 +1,4 @@
-// The one source for groups and printers (the overlay gets them through overlay/taxonomy.tsv) and for the rules
+// The one source for groups and printers (the overlay gets them through mod/Byteboard/data/taxonomy.tsv) and for the rules
 // that decide which catalog items are research entries.
 
 // Functional groups that cut across printers, in display order: [key, label].

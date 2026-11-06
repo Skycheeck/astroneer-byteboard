@@ -347,7 +347,7 @@ DWORD RunFrameGuarded(IDXGISwapChain* sc, void** faultAddress) {
     }
 }
 
-// "ResearchOverlay-active.dll+0x1a2b3", or the bare address outside any module.
+// "Byteboard.dll+0x1a2b3", or the bare address outside any module.
 std::string DescribeAddress(void* address) {
     char text[MAX_PATH + 32];
     HMODULE module = nullptr;

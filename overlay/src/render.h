@@ -11,7 +11,7 @@ namespace rd {
 // for the rest of the session; the game keeps running.
 HRESULT STDMETHODCALLTYPE HkPresent(IDXGISwapChain* swapChain, UINT syncInterval, UINT flags);
 
-// Extension points for preview_capture.cpp, which only ResearchOverlayPreview.dll contains.
+// Extension points for preview_capture.cpp, which only ByteboardPreview.dll contains.
 struct FrameHooks {
     bool persistLayout = true;                            // false: no overlay.ini, the player's layout stays untouched
     void (*afterFrame)(IDXGISwapChain* swapChain) = nullptr;  // called after each drawn overlay frame

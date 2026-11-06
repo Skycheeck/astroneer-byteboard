@@ -246,7 +246,7 @@ void DrawResearchButton(UiState& ui, const Item& selected, Status status, const 
             const Item* other = FindItem(pending.itemId);
             Wrapped(C::muted, "Ждём подтверждения изучения «" + (other ? other->nameRu : pending.itemId) + "»…");
         } else if (!live.connected) {
-            Wrapped(C::warn, "Нет связи с модом ResearchBridge.");
+            Wrapped(C::warn, "Нет связи с Lua-модом Byteboard.");
         } else if (!live.allowUnlock) {
             Wrapped(C::muted, "Изучение выключено: отметьте «Изучение разрешено» вверху.");
         } else if (status == Status::TooExpensive) {

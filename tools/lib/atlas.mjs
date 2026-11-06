@@ -1,4 +1,4 @@
-// The icon atlas the in-game overlay reads, overlay/icons.rgba, as docs/PROTOCOL.md fixes it: u32 width and
+// The icon atlas the in-game overlay reads, mod/Byteboard/data/icons.rgba, as docs/PROTOCOL.md fixes it: u32 width and
 // u32 height (little-endian), then RGBA8 pixels row by row; ICON_SIZE×ICON_SIZE cells, ICONS_PER_ROW per row,
 // in icon index order. The icon steps produce every icon at ICON_SIZE so that it fits a cell.
 export const ICON_SIZE = 64;

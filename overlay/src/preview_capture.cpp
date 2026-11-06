@@ -1,7 +1,7 @@
-// Preview support, linked only into ResearchOverlayPreview.dll (see CMakeLists.txt): preview.exe
+// Preview support, linked only into ByteboardPreview.dll (see CMakeLists.txt): preview.exe
 // opens the overlay on a chosen view without the F8 key or a game signal, and the DLL saves one
 // frame as a BMP. The game DLL has no exports.
-// Threads: preview.exe calls ResearchOverlay_Preview from the thread that presents its frames, so
+// Threads: preview.exe calls Byteboard_Preview from the thread that presents its frames, so
 // everything here runs on the overlay's render thread.
 #include <windows.h>
 
@@ -82,7 +82,7 @@ void CaptureAfterFrames(IDXGISwapChain* sc) {
 
 // Opens the overlay and saves a frame (after a few frames) as a BMP. selectId is an item id to
 // select in the catalog, or "printer:<ItemCategory_...>" for that printer's list.
-extern "C" __declspec(dllexport) void ResearchOverlay_Preview(const char* selectId, const wchar_t* bmpPath) {
+extern "C" __declspec(dllexport) void Byteboard_Preview(const char* selectId, const wchar_t* bmpPath) {
     rd::FrameHooks hooks;
     hooks.persistLayout = false;
     hooks.afterFrame = &rd::CaptureAfterFrames;

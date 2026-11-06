@@ -15,12 +15,12 @@ local ALLOW_UNLOCK_FILE = "allow-unlock"
 local UTF8_BOM = "^\239\187\191"
 
 local tag = ""
-M.OUT = nil  -- "<repo>/ue4ss/out/"
-M.IN = nil   -- "<repo>/ue4ss/in/"
+M.OUT = nil  -- "<mod>/out/"
+M.IN = nil   -- "<mod>/in/"
 
-function M.init(repoDir, consoleTag)
-    M.OUT = repoDir .. "/ue4ss/out/"
-    M.IN = repoDir .. "/ue4ss/in/"
+function M.init(modDir, consoleTag)
+    M.OUT = modDir .. "/out/"
+    M.IN = modDir .. "/in/"
     tag = consoleTag
 end
 

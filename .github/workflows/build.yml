@@ -1,0 +1,65 @@
+# Builds the overlay DLL and the release archive on every push and pull request. A tag vX.Y.Z also
+# creates a draft GitHub release with the archive attached; publish it by hand after a check.
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Configure
+        run: cmake -S overlay -B overlay/build -A x64
+
+      - name: Build
+        run: cmake --build overlay/build --config Release
+
+      - name: Package
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            node tools/package.mjs --tag "$GITHUB_REF_NAME"
+          else
+            node tools/package.mjs
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Byteboard
+          path: dist/*.zip
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Byteboard
+          path: dist
+
+      - name: Create a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME" dist/*.zip
+          --repo "$GITHUB_REPOSITORY" --draft --title "Byteboard $GITHUB_REF_NAME"
+          --notes "Unpack into <game>/Astro/Binaries/Win64/ue4ss/Mods/. Needs RE-UE4SS experimental 3.0.1-1183 or newer. See README.txt inside the archive."

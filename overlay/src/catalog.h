@@ -1,6 +1,6 @@
 #pragma once
-// The item catalog and its taxonomy (purpose groups and printers), read from overlay/catalog.tsv
-// and overlay/taxonomy.tsv. tools/extract.mjs writes both; the format is in docs/PROTOCOL.md.
+// The item catalog and its taxonomy (purpose groups and printers), read from <mod>/data/catalog.tsv
+// and <mod>/data/taxonomy.tsv. The DLL extracts both from the game (gamedata.cpp); the format is in docs/PROTOCOL.md.
 // Threads: LoadCatalog runs once on the overlay's MainThread before the hooks are installed. The
 // data is read-only afterwards, so every thread reads it without locking.
 #include <string>

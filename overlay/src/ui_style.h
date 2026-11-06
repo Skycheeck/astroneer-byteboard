@@ -49,7 +49,7 @@ ImFont* DisplayFont();  // Bahnschrift, the closest system face to the game's sq
 
 void LoadFonts(ImGuiIO& io);
 void ApplyStyle();
-// Item icons: white silhouettes in one RGBA atlas (overlay/icons.rgba), tinted when drawn.
+// Item icons: white silhouettes in one RGBA atlas (<mod>/data/icons.rgba), tinted when drawn.
 void LoadIconAtlas(ID3D11Device* device);
 void DrawIcon(ImDrawList* dl, int index, ImVec2 pos, float size, uint32_t rgb);
 

@@ -5,7 +5,8 @@ import {fileURLToPath} from 'node:url';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const DATA = path.join(ROOT, 'data');
-export const OVERLAY = path.join(ROOT, 'overlay');
+// The game data the overlay reads: the data folder of the mod in this repository.
+export const MOD_DATA = path.join(ROOT, 'mod', 'Byteboard', 'data');
 
 // The game's main pak: ASTRONEER_PAK, or the default Steam install location.
 export const PAK = process.env.ASTRONEER_PAK
@@ -16,9 +17,9 @@ export const FILES = {
   catalog: path.join(DATA, 'catalog.json'),
   icons: path.join(DATA, 'icons.json'),
   items: path.join(DATA, 'items.json'),
-  overlayCatalog: path.join(OVERLAY, 'catalog.tsv'),
-  overlayTaxonomy: path.join(OVERLAY, 'taxonomy.tsv'),
-  overlayIcons: path.join(OVERLAY, 'icons.rgba'),
+  overlayCatalog: path.join(MOD_DATA, 'catalog.tsv'),
+  overlayTaxonomy: path.join(MOD_DATA, 'taxonomy.tsv'),
+  overlayIcons: path.join(MOD_DATA, 'icons.rgba'),
 };
 
 // "data/catalog.json" for messages.

@@ -1,11 +1,13 @@
-// Byteboard in-game overlay. The ResearchBridge Lua mod loads a copy of this DLL into ASTRONEER
-// (ue4ss/out/ResearchOverlay-active.dll). It hooks IDXGISwapChain::Present and draws a Dear ImGui
-// overlay: the research catalog (F8 or the backpack catalog) and the list of an opened printer. It
-// talks to the mod only through files in <repo>/ue4ss (docs/PROTOCOL.md).
+// Byteboard in-game overlay. The Byteboard Lua mod loads this DLL (<mod>/Byteboard.dll) into
+// ASTRONEER. On start it extracts the game data from the game's pak when needed (gamedata.cpp), then
+// hooks IDXGISwapChain::Present and draws a Dear ImGui overlay: the research catalog (F8 or the
+// backpack catalog) and the list of an opened printer. It talks to the Lua mod only through files
+// in <mod>/in and <mod>/out (docs/PROTOCOL.md).
 //
 // Threads: Present runs on the game's render thread and does all ImGui and D3D work (render.cpp).
 // The window procedure runs on the game thread; it queues input and decides what reaches the game
-// (hooks.cpp). The DLL's own poll thread, MainThread below, reads the mod's files (bridge.cpp).
+// (hooks.cpp). The DLL's own thread, MainThread below, extracts the data and then polls the mod's
+// files (bridge.cpp).
 // Shared state is atomic or behind a mutex. A fault inside an overlay frame turns the overlay off
 // for the session (render.cpp, HkPresent).
 #include <windows.h>
@@ -16,6 +18,7 @@
 
 #include "bridge.h"
 #include "catalog.h"
+#include "gamedata.h"
 #include "hooks.h"
 #include "paths.h"
 #include "util.h"
@@ -34,7 +37,7 @@ HMODULE g_self = nullptr;
 // handle stays open for the life of the process.
 bool ClaimProcess() {
     wchar_t name[64];
-    swprintf_s(name, L"Local\\ResearchOverlay_%lu", GetCurrentProcessId());
+    swprintf_s(name, L"Local\\Byteboard_%lu", GetCurrentProcessId());
     CreateMutexW(nullptr, FALSE, name);
     return GetLastError() != ERROR_ALREADY_EXISTS;
 }
@@ -58,11 +61,18 @@ bool ClaimProcess() {
 
 DWORD WINAPI MainThread(LPVOID) {
     if (!ClaimProcess()) return 0;
-    if (!InitPaths(g_self)) return 0;  // not inside a Byteboard checkout with data: stay off
+    if (!InitPaths(g_self)) return 0;  // not in a Byteboard mod folder: stay off
+    Log("Byteboard " RD_VERSION " started");
     // Without data the overlay is pointless: when the catalog does not load, nothing is hooked.
     bool loaded = false;
     try {
-        loaded = LoadCatalog();
+        loaded = EnsureGameData(g_self, false) && LoadCatalog();
+        // Data that does not load (a damaged file) is extracted once more, so it cannot keep the
+        // overlay off on every start.
+        if (!loaded && Paths().inGame) {
+            Log("the game data does not load, extracting it again");
+            loaded = EnsureGameData(g_self, true) && LoadCatalog();
+        }
     } catch (...) {
         loaded = false;
     }
@@ -87,6 +97,8 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID) {
         // into freed code and crash the game.
         HMODULE pinned = nullptr;
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)&DllMain, &pinned);
+        // The Lua mod writes into these folders as soon as this load returns.
+        rd::CreateModFolders(module);
         if (HANDLE thread = CreateThread(nullptr, 0, rd::MainThread, nullptr, 0, nullptr)) CloseHandle(thread);
     }
     return TRUE;

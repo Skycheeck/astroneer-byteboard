@@ -1,3 +1,6 @@
 [submodule "overlay/third_party/imgui"]
 	path = overlay/third_party/imgui
 	url = https://github.com/ocornut/imgui
+[submodule "overlay/third_party/zlib"]
+	path = overlay/third_party/zlib
+	url = https://github.com/madler/zlib

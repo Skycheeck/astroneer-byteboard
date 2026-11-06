@@ -1,5 +1,5 @@
 #pragma once
-// The overlay's side of the file protocol with the ResearchBridge Lua mod (docs/PROTOCOL.md):
+// The overlay's side of the file protocol with the Byteboard Lua mod (docs/PROTOCOL.md):
 // state.json and results.json, the catalog.txt/printer.txt signals, cmd.txt and allow-unlock.
 // Threads: the overlay's poll thread calls PollState and PollSignals. The render thread reads
 // snapshots, takes requests, writes commands and sets allow-unlock. Shared data is guarded here.

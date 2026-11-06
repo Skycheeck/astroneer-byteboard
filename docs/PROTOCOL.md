@@ -1,19 +1,20 @@
 # File protocol
 
-The Lua mod and the in-game overlay never talk to each other directly. They share files under
-`ue4ss/` in the repository. This page is the single source of truth for those files.
-Paths are relative to the repository root.
+The Lua mod and the in-game overlay never talk to each other directly. They share files in
+the mod folder (`ue4ss/Mods/Byteboard` in the game, `mod/Byteboard` in the repository). This page is
+the single source of truth for those files. Paths are relative to the mod folder; the overlay DLL
+creates `in/`, `out/` and `data/` when it loads.
 
 | File | Writer | Readers | Purpose |
 |---|---|---|---|
-| `ue4ss/out/state.json` | mod, every 1 s | overlay | balance, unlocked items, open printer |
-| `ue4ss/out/results.json` | mod, per command | overlay | results of the last 8 commands |
-| `ue4ss/out/catalog.txt` | mod, on change | overlay | backpack research catalog opened or closed |
-| `ue4ss/out/printer.txt` | mod, on change | overlay | printer panel or backpack printer opened or closed |
-| `ue4ss/in/cmd.txt` | overlay | mod, every 100 ms | one pending command |
-| `ue4ss/in/allow-unlock` | overlay checkbox | mod, overlay | research (spending bytes) is allowed while it exists |
-| `ue4ss/out/events.log`, `ue4ss/out/commands.log` | mod | people | diagnostics; rotated at load when larger than 1 MB |
-| `ue4ss/out/overlay.log`, `ue4ss/out/overlay.ini` | overlay | people, overlay | diagnostics; window layout |
+| `out/state.json` | mod, every 1 s | overlay | balance, unlocked items, open printer |
+| `out/results.json` | mod, per command | overlay | results of the last 8 commands |
+| `out/catalog.txt` | mod, on change | overlay | backpack research catalog opened or closed |
+| `out/printer.txt` | mod, on change | overlay | printer panel or backpack printer opened or closed |
+| `in/cmd.txt` | overlay | mod, every 100 ms | one pending command |
+| `in/allow-unlock` | overlay checkbox | mod, overlay | research (spending bytes) is allowed while it exists |
+| `out/events.log`, `out/commands.log` | mod | people | diagnostics; rotated at load when larger than 1 MB |
+| `out/overlay.log`, `out/overlay.ini` | overlay | people, overlay | diagnostics; window layout |
 
 All text files are UTF-8 without BOM. The mod writes every `out/` file by writing `<name>.tmp`,
 deleting `<name>` and renaming the temporary file. A reader can therefore briefly find a file
@@ -131,22 +132,26 @@ delete fails. At load the mod deletes any `cmd.txt` left from a previous session
 An empty marker file. Only `unlock` checks it; `select` and `print` do what the printer's own
 buttons do and are not gated. The overlay checkbox «Изучение разрешено» creates and deletes it.
 
-## Generated data shared by the tools and the overlay
+## Game data
 
-`tools/extract.mjs` writes these from the user's own game files. They are not in git.
+The overlay DLL extracts these from the user's own game files (`overlay/extract`) into `data/` on the
+first start and again whenever the game's pak or the mod version changes; `data/source.txt` records
+what they came from (`pak <size> <last write time>` and `byteboard <version> <DLL size> <DLL write time>`). In the repository
+`node tools/extract.mjs` writes the same files byte for byte, together with its intermediate JSON
+files in the repository's own `data/` folder. None of them is in git or in the release archive.
 
-- `overlay/catalog.tsv`: UTF-8, tab-separated, one item per line. The first line starts with `#`
+- `data/catalog.tsv`: UTF-8, tab-separated, one item per line. The first line starts with `#`
   and lists the column names; readers skip lines that start with `#`. Columns:
   `id, classPath, nameRu, nameEn, group, subgroup, printer, cost, recipe, icon, description, pickup`.
   `group` is a group key from `taxonomy.tsv`; `printer` is a printer key (`Backpack`, `SmFab`,
   `MedFab`, `LgFab`); `recipe` is `<count>× <name>` joined by `, `; `icon` is an index into
   `icons.rgba`; `pickup` is the class path of the item's world actor class.
-- `overlay/taxonomy.tsv`: UTF-8, tab-separated. Lines `group	<key>	<label>` in display order,
+- `data/taxonomy.tsv`: UTF-8, tab-separated. Lines `group	<key>	<label>` in display order,
   then lines `printer	<key>	<ItemCategory_...>	<label>	<short label>` in display order.
-- `overlay/icons.rgba`: `u32 width, u32 height` (little-endian), then RGBA8 pixels; 64×64 cells,
+- `data/icons.rgba`: `u32 width, u32 height` (little-endian), then RGBA8 pixels; 64×64 cells,
   16 per row.
-- `data/catalog.json`: every catalog item from the game files, with `classPath` and `pickup`.
-- `data/items.json`: `{ items, groups, printers, icons }`, the input of `overlay/catalog.tsv`,
+- `<repo>/data/catalog.json` (tools only): every catalog item from the game files, with `classPath` and `pickup`.
+- `<repo>/data/items.json` (tools only): `{ items, groups, printers, icons }`, the input of `catalog.tsv`,
   `taxonomy.tsv` and `icons.rgba`. `items` is the researchable list, `printers` is
   `[{key, category, label, short}]`, `groups` is `[[key, label], ...]`, `icons` maps icon names
   to PNG data URIs.

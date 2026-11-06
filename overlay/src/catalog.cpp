@@ -40,7 +40,7 @@ std::string_view WithoutCr(std::string_view line) {
 
 void LoadTaxonomy(std::vector<Group>& groups, std::vector<Printer>& printers) {
     std::string text;
-    if (!ReadSharedFile(Paths().overlay / "taxonomy.tsv", text)) {
+    if (!ReadSharedFile(Paths().data / "taxonomy.tsv", text)) {
         Log("taxonomy.tsv not found: all items are shown under the fallback group and printer");
         return;
     }
@@ -121,10 +121,12 @@ private:
 
 bool LoadCatalog() {
     std::string text;
-    if (!ReadSharedFile(Paths().overlay / "catalog.tsv", text)) {
+    if (!ReadSharedFile(Paths().data / "catalog.tsv", text)) {
         Log("catalog.tsv cannot be read");
         return false;
     }
+    // MainThread may load a second time after a fresh extraction (dllmain.cpp).
+    g_catalog = Catalog{};
     Catalog& cat = g_catalog;
     LoadTaxonomy(cat.groups, cat.printers);
 

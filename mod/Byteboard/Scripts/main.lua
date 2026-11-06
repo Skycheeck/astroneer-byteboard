@@ -1,4 +1,4 @@
--- ResearchBridge: the game side of Byteboard, a UE4SS Lua mod for ASTRONEER 1.42.3.
+-- Byteboard: the game side of the mod, a UE4SS Lua mod for ASTRONEER 1.42.3.
 -- 1) State: once per second writes the byte balance, the unlocked list and the open printer's
 --    recipe and ingredient counts to out/state.json.
 -- 2) Signals: out/catalog.txt when the backpack research catalog opens or closes, out/printer.txt
@@ -8,7 +8,8 @@
 --    select <class path> (steps the open printer to that recipe), print [<class path>] (starts
 --    the open printer). Outside a world every command gets not_in_world. Results go to
 --    out/results.json.
--- 4) Loads the in-game overlay DLL (overlay/bin/ResearchOverlay.dll).
+-- 4) Loads the in-game overlay DLL (<mod>/Byteboard.dll) first: the DLL creates the in/, out/ and
+--    data/ folders while it loads and extracts the game data into data/ (docs/ARCHITECTURE.md).
 -- All file formats and timings: docs/PROTOCOL.md. Logs: out/events.log, out/commands.log.
 -- It never calls Authority* or exec cheat functions.
 --
@@ -31,14 +32,15 @@
 -- A module receives the loader as its chunk argument (`local use = ...`), has no side effects
 -- when loaded and returns its table. Only this file starts loops and registers hooks.
 
--- Paths follow the repository: this file is <repo>/ue4ss/mod/ResearchBridge/Scripts/main.lua.
-local TAG = "[ResearchBridge] "
+-- Every path is relative to the mod folder: this file is <mod>/Scripts/main.lua, and the mod keeps
+-- its files in <mod>/in, <mod>/out and <mod>/data (docs/PROTOCOL.md).
+local VERSION = "0.1.0"
+local TAG = "[Byteboard] "
 local SCRIPT_PATH = (debug.getinfo(1, "S").source:gsub("^@", ""):gsub("\\", "/"))
 local SCRIPTS_DIR = SCRIPT_PATH:match("^(.*/)[^/]+$")
-local REPO = SCRIPT_PATH:match("^(.*)/ue4ss/mod/[^/]+/Scripts/[^/]+$")
-if not REPO or not SCRIPTS_DIR then
-    print(TAG .. "unexpected location " .. SCRIPT_PATH
-        .. ", expected <repo>/ue4ss/mod/ResearchBridge/Scripts/main.lua\n")
+local MOD_DIR = SCRIPT_PATH:match("^(.*)/Scripts/[^/]+$")
+if not MOD_DIR or not SCRIPTS_DIR then
+    print(TAG .. "unexpected location " .. SCRIPT_PATH .. ", expected <mod>/Scripts/main.lua\n")
     return
 end
 
@@ -75,15 +77,44 @@ if not okModules then
     return
 end
 
-protocol.init(REPO, TAG)
-protocol.rotateLogs()
-protocol.removeLeftoverCommand()
+protocol.init(MOD_DIR, TAG)
 
+-- Without the game-thread loop the mod cannot run, and the overlay alone would only show that it
+-- has no connection, so neither starts.
 if not loop.available() then
-    protocol.say("this UE4SS build is too old: LoopInGameThreadWithDelay is missing (needs "
+    protocol.say("version " .. VERSION .. ": this UE4SS build is too old: LoopInGameThreadWithDelay is missing (needs "
         .. loop.MINIMUM_UE4SS .. " or newer); nothing started")
     return
 end
+
+-- In-game overlay -------------------------------------------------------------------------------
+-- Byteboard.dll is loaded in place. A UE4SS hot reload (Ctrl+R) loads the same file again, which
+-- only adds a reference to the module already loaded, and the DLL pins itself, so the reload
+-- cannot unload it either. The DLL creates the in/, out/ and data/ folders while it loads, so it
+-- is loaded before anything is written.
+local function loadOverlay()
+    local dllPath = MOD_DIR .. "/Byteboard.dll"
+    if not protocol.exists(dllPath) then
+        return "overlay DLL missing: " .. dllPath
+    end
+    if not (package and package.loadlib) then
+        return "package.loadlib is unavailable, overlay not loaded"
+    end
+    local loaded, err = package.loadlib(dllPath, "*")
+    if not loaded then
+        return "overlay load failed: " .. tostring(err)
+    end
+    return "overlay loaded"
+end
+
+local okOverlay, overlayMessage = pcall(loadOverlay)
+if not okOverlay then
+    overlayMessage = "overlay load failed: " .. tostring(overlayMessage)
+end
+
+protocol.rotateLogs()
+protocol.removeLeftoverCommand()
+protocol.say("version " .. VERSION .. ", " .. overlayMessage)
 
 local STATE_PERIOD_MS = 1000
 local FAST_PERIOD_MS = 100
@@ -171,46 +202,7 @@ local function stateTick()
     end
 end
 
--- In-game overlay -------------------------------------------------------------------------------
--- Loads a copy of overlay/bin/ResearchOverlay.dll, so the build output stays writable. The copy
--- stays locked while the game runs, so a hot reload (Ctrl+R) does not load a second overlay; the
--- DLL pins itself, so the reload cannot unload it either. New builds load after a game restart.
-local function loadOverlay()
-    local source = io.open(REPO .. "/overlay/bin/ResearchOverlay.dll", "rb")
-    if not source then
-        return "overlay DLL not built yet (overlay/bin/ResearchOverlay.dll)"
-    end
-    local bytes = source:read("a")
-    source:close()
-    local activePath = protocol.OUT .. "ResearchOverlay-active.dll"
-    os.remove(activePath)
-    local copy = io.open(activePath, "wb")
-    if not copy then
-        return "overlay already loaded in this game process"
-    end
-    local written = copy:write(bytes)
-    local closed = copy:close()
-    if not written or not closed then
-        return "cannot copy the overlay DLL"
-    end
-    if not (package and package.loadlib) then
-        return "package.loadlib is unavailable, overlay not loaded"
-    end
-    local loaded, err = package.loadlib(activePath, "*")
-    if not loaded then
-        return "overlay load failed: " .. tostring(err)
-    end
-    return "overlay loaded"
-end
-
 -- Start ------------------------------------------------------------------------------------------
-local okOverlay, overlayMessage = pcall(loadOverlay)
-if okOverlay then
-    protocol.say(overlayMessage)
-else
-    protocol.say("overlay load failed: " .. tostring(overlayMessage))
-end
-
 registerHook(SERVER_REQUEST_UNLOCK, "unlock request hook", commands.logUnlockRequest)
 
 protocol.say("loaded")

@@ -1,15 +1,14 @@
-# Game-derived data: regenerate with `node tools/extract.mjs` from your own install.
+# Game-derived data: the DLL extracts it in the game; in the repository `node tools/extract.mjs` or
+# overlay\bin\byteboard-extract.exe regenerates it from your own install. Never commit it.
 /data/
-/overlay/catalog.tsv
-/overlay/taxonomy.tsv
-/overlay/icons.rgba
+/mod/Byteboard/data/
 
 # Build output
 /overlay/build/
 /overlay/bin/
+/mod/Byteboard/Byteboard.dll
+/dist/
 
 # Runtime files written by the mod and the overlay
-/ue4ss/out/*
-!/ue4ss/out/.gitkeep
-/ue4ss/in/*
-!/ue4ss/in/.gitkeep
+/mod/Byteboard/in/
+/mod/Byteboard/out/

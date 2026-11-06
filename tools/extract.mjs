@@ -3,7 +3,7 @@
 //   build-catalog   → data/catalog.json
 //   build-icons     → data/icons.json
 //   build-items     → data/items.json
-//   export-overlay  → overlay/catalog.tsv, overlay/taxonomy.tsv, overlay/icons.rgba
+//   export-overlay  → mod/Byteboard/data/{catalog.tsv,taxonomy.tsv,icons.rgba}
 // The steps run in this process and share one open pak; each can also run alone (node tools/steps/<step>.mjs),
 // reading the earlier steps' files from data/. The pak path comes from ASTRONEER_PAK (default in lib/paths.mjs).
 import {runSteps} from './lib/context.mjs';

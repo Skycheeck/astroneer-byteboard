@@ -38,7 +38,7 @@ std::string ClassKey(std::string_view classPath);
 bool ReadSharedFile(const fs::path& path, std::string& data, double* ageSec = nullptr);
 bool FileExists(const fs::path& path);
 
-// Appends a line to ue4ss/out/overlay.log. Never throws; does nothing before InitPaths.
+// Appends a line to <mod>/out/overlay.log. Never throws; does nothing before InitPaths.
 void Log(const std::string& line);
 
 // Logs the first line, then at most one line per interval, with the number of lines left out.

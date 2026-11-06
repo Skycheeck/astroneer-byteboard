@@ -34,39 +34,26 @@ files are included.
   researched opens it in the catalog. At the top: the current recipe, the ingredients at hand and a Print
   button.
 - **Backpack (Q)**: a narrow list of the backpack printer's recipes.
-- Window positions and sizes are saved in `ue4ss/out/overlay.ini`; to restore the defaults, delete the file
-  while the game is closed.
-
-## Requirements
-
-- [Node.js](https://nodejs.org/) 18 or newer: extracts the data from the game.
-- Visual Studio 2022 or newer, or its Build Tools, with the "Desktop development with C++" workload (MSVC
-  x64) and its "C++ CMake tools for Windows" component: builds the overlay.
-- Git.
+- Window positions and sizes are saved in `Byteboard\out\overlay.ini`; to restore the defaults, delete the
+  file while the game is closed.
 
 ## Install
 
-1. Clone the repository together with Dear ImGui:
-   ```bash
-   git clone --recurse-submodules https://github.com/Skycheeck/astroneer-byteboard.git
-   ```
-2. Install UE4SS and point it at the clone's mods folder: [docs/INSTALL-UE4SS.md](docs/INSTALL-UE4SS.md).
-3. Extract the data from your own copy of the game. The repository does not contain it: a script reads it
-   from the game's pak file in a few seconds. By default it reads the pak from the default Steam folder
-   (`C:Program Files (x86)SteamsteamappscommonASTRONEER`); for any other location, including another
-   Steam library, set `ASTRONEER_PAK`:
-   ```powershell
-   $env:ASTRONEER_PAK = '<game folder>\Astro\Content\Paks\pakchunk0-WindowsNoEditor.pak'
-   node tools/extract.mjs
-   ```
-   Run the extraction again after a game update.
-4. Build the overlay: `overlay\build.cmd`.
-5. Start the game.
+1. Install [RE-UE4SS](https://github.com/UE4SS-RE/RE-UE4SS/releases) experimental 3.0.1-1183 or newer:
+   [docs/INSTALL-UE4SS.md](docs/INSTALL-UE4SS.md).
+2. Download `Byteboard-<version>.zip` from [Releases](https://github.com/Skycheeck/astroneer-byteboard/releases)
+   and copy its `Byteboard` folder into `<game>\Astro\Binaries\Win64\ue4ss\Mods\`.
+3. Start the game. The archive contains no game files: on the first start, and after each game update, the
+   mod reads the item names, recipes and icons from your own copy of the game (a few seconds).
+
+To build it yourself (Visual Studio 2022 or newer with the C++ x64 tools and "C++ CMake tools for Windows",
+and Git), clone with `git clone --recurse-submodules https://github.com/Skycheeck/astroneer-byteboard.git`
+and see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Safety
 
 - Research spends bytes, so it runs only while the «Изучение разрешено» (research allowed) checkbox in the
-  catalog window is ticked (the checkbox creates the file `ue4ss/in/allow-unlock`). The mod asks the game to
+  catalog window is ticked (the checkbox creates the file `Byteboard\in\allow-unlock`). The mod asks the game to
   research an item with the same call the game's own catalog uses.
 - Recipe selection and printing do not depend on the checkbox: they do what the printer's own buttons do.
 - The mod does not write to saves and does not call the game's cheat functions. Items that exist only in
@@ -75,23 +62,25 @@ files are included.
 
 ## Uninstall
 
-Remove the `+ModsFolderPaths` line from the UE4SS settings or remove UE4SS completely:
-[docs/INSTALL-UE4SS.md](docs/INSTALL-UE4SS.md#uninstall). Researched items stay in the save.
+Close the game and delete `ue4ss\Mods\Byteboard`. Items you researched stay researched in your save. To
+remove UE4SS as well, see [docs/INSTALL-UE4SS.md](docs/INSTALL-UE4SS.md#uninstall).
 
 ## Troubleshooting
 
-- `ue4ss/out/events.log`: mod events; `ue4ss/out/commands.log`: commands and their results;
-  `ue4ss/out/overlay.log`: the overlay. `UE4SS.log` is in the game's `ue4ss` folder.
+- Logs are in the mod folder: `out\events.log` (mod events), `out\commands.log` (commands and their
+  results), `out\overlay.log` (the overlay and the game data extraction). `UE4SS.log` is in the game's
+  `ue4ss` folder.
+- If the mod folder has no `out` folder, the DLL did not load: `UE4SS.log` says why.
+- If the overlay never appears, `overlay.log` says why, for example that a game update changed a file
+  format the extraction reads.
 - If the overlay hits an error while drawing a frame, it turns itself off until the game restarts and logs
   this in `overlay.log`; the game keeps running.
-- The mod loads a copy of the DLL (`ue4ss/out/ResearchOverlay-active.dll`), so you can rebuild the overlay
-  while the game runs; the new build loads after a game restart.
 
 ## How it works
 
 The mod and the overlay never talk to each other directly: the mod writes the game state to
-`ue4ss/out/state.json` once a second, and panel open/close signals and command results to other files in
-`ue4ss/out/` as they happen; the overlay writes commands to `ue4ss/in/cmd.txt`. Details:
+`out/state.json` in its folder once a second, and panel open/close signals and command results to other files
+in `out/` as they happen; the overlay writes commands to `in/cmd.txt`. Details:
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): components, threads, safety rules;
 - [docs/PROTOCOL.md](docs/PROTOCOL.md): the formats of all shared files;
@@ -103,5 +92,5 @@ The mod and the overlay never talk to each other directly: the mod writes the ga
 [MIT](LICENSE). Third-party components: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ASTRONEER is a trademark of System Era Softworks. This project is unofficial and not affiliated with System
-Era Softworks. The files `tools/extract.mjs` creates (`data/`, `overlay/catalog.tsv`, `overlay/taxonomy.tsv`,
-`overlay/icons.rgba`) contain game data: do not publish them.
+Era Softworks. The files the mod writes into its `data` folder (and `tools/extract.mjs` into `data/` and
+`mod/Byteboard/data/`) contain game data: do not publish them.

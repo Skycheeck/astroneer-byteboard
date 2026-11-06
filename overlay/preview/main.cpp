@@ -1,11 +1,11 @@
 // Renders the overlay outside the game. It creates a D3D11 window with Unreal's class name
-// ("UnrealWindow"), loads ResearchOverlayPreview.dll (the overlay plus src/preview_capture.cpp)
-// from its own folder, opens a view through ResearchOverlay_Preview and presents frames until the
+// ("UnrealWindow"), loads ByteboardPreview.dll (the overlay plus src/preview_capture.cpp)
+// from its own folder, opens a view through Byteboard_Preview and presents frames until the
 // DLL has saved one as a BMP.
 //   preview.exe <out.bmp> [itemId | printer:ItemCategory_...] [width] [height]
 //   preview.exe --unload-test
 // Exit codes: 0 done; 1 bad arguments or setup; 2 the DLL was unloaded (unload test); 3 the overlay
-// did not hook Present or did not capture a frame (ue4ss/out/overlay.log says why).
+// did not hook Present or did not capture a frame (mod/Byteboard/out/overlay.log says why).
 #include <windows.h>
 
 #include <d3d11.h>
@@ -109,24 +109,25 @@ int wmain(int argc, wchar_t** argv) {
         fprintf(stderr, "bad module path\n");
         return 1;
     }
-    // preview.exe sits in overlay/bin. Without overlay/catalog.tsv the overlay stays off before it
-    // can open its log, so the reason is printed here.
+    // preview.exe sits in overlay/bin and the preview DLL reads <repo>/mod/Byteboard/data. Without
+    // catalog.tsv there the overlay stays off, so the reason is printed here.
     const std::wstring binFolder(dll, slash + 1);
-    if (!FileExists(binFolder + L"..\\catalog.tsv")) {
-        fprintf(stderr, "overlay\\catalog.tsv is missing: run \"node tools/extract.mjs\" in the repository first\n");
+    if (!FileExists(binFolder + L"..\\..\\mod\\Byteboard\\data\\catalog.tsv")) {
+        fprintf(stderr, "mod\\Byteboard\\data\\catalog.tsv is missing: run \"overlay\\bin\\byteboard-extract.exe <pak> "
+                        "mod\\Byteboard\\data\" (or \"node tools/extract.mjs\") in the repository first\n");
         return 1;
     }
-    if (wcscpy_s(slash + 1, MAX_PATH - (slash + 1 - dll), L"ResearchOverlayPreview.dll") != 0) {
+    if (wcscpy_s(slash + 1, MAX_PATH - (slash + 1 - dll), L"ByteboardPreview.dll") != 0) {
         fprintf(stderr, "bad module path\n");
         return 1;
     }
     HMODULE mod = LoadLibraryW(dll);
     if (!mod) {
-        fprintf(stderr, "cannot load ResearchOverlayPreview.dll\n");
+        fprintf(stderr, "cannot load ByteboardPreview.dll\n");
         return 1;
     }
     if (!WaitForPresentHook(sc, originalPresent)) {
-        fprintf(stderr, "the overlay did not hook Present (see ue4ss/out/overlay.log)\n");
+        fprintf(stderr, "the overlay did not hook Present (see mod/Byteboard/out/overlay.log)\n");
         return 3;
     }
 
@@ -134,14 +135,14 @@ int wmain(int argc, wchar_t** argv) {
         // What a UE4SS hot reload does: the Lua state frees the library. A pinned DLL must survive.
         FreeLibrary(mod);
         FreeLibrary(mod);
-        const bool alive = GetModuleHandleW(L"ResearchOverlayPreview.dll") != nullptr;
+        const bool alive = GetModuleHandleW(L"ByteboardPreview.dll") != nullptr;
         printf("after FreeLibrary x2: %s\n", alive ? "still loaded (pinned)" : "UNLOADED");
         return alive ? 0 : 2;
     }
 
-    const auto preview = (void (*)(const char*, const wchar_t*))GetProcAddress(mod, "ResearchOverlay_Preview");
+    const auto preview = (void (*)(const char*, const wchar_t*))GetProcAddress(mod, "Byteboard_Preview");
     if (!preview) {
-        fprintf(stderr, "ResearchOverlay_Preview not exported\n");
+        fprintf(stderr, "Byteboard_Preview not exported\n");
         return 1;
     }
     DeleteFileW(out.c_str());  // a file left from an earlier run must not count as this capture
@@ -162,7 +163,7 @@ int wmain(int argc, wchar_t** argv) {
         saved = FileExists(out);
     }
     if (!saved) {
-        fprintf(stderr, "no frame was captured (see ue4ss/out/overlay.log)\n");
+        fprintf(stderr, "no frame was captured (see mod/Byteboard/out/overlay.log)\n");
         return 3;
     }
     printf("saved %ls\n", out.c_str());

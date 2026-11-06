@@ -109,7 +109,7 @@ void ApplyStyle() {
 
 void LoadIconAtlas(ID3D11Device* device) {
     std::string atlas;
-    if (!ReadSharedFile(Paths().overlay / "icons.rgba", atlas) || atlas.size() <= kAtlasHeaderBytes) return;
+    if (!ReadSharedFile(Paths().data / "icons.rgba", atlas) || atlas.size() <= kAtlasHeaderBytes) return;
     uint32_t width = 0;
     uint32_t height = 0;
     memcpy(&width, atlas.data(), 4);

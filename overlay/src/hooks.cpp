@@ -138,7 +138,7 @@ bool HookPresent(HMODULE self) {
     WNDCLASSEXW wc{sizeof wc};
     wc.lpfnWndProc = DefWindowProcW;
     wc.hInstance = self;
-    wc.lpszClassName = L"ResearchOverlayDummy";
+    wc.lpszClassName = L"ByteboardDummy";
     RegisterClassExW(&wc);
     HWND window = CreateWindowW(wc.lpszClassName, L"", WS_OVERLAPPEDWINDOW, 0, 0, 64, 64, nullptr, nullptr, self, nullptr);
     DXGI_SWAP_CHAIN_DESC sd{};

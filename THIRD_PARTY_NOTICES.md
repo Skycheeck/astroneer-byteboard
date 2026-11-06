@@ -29,10 +29,38 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## zlib
+
+The overlay DLL decompresses the game's pak with the inflate part of [zlib](https://github.com/madler/zlib)
+1.3.1, included as a git submodule in `overlay/third_party/zlib`, under the zlib License:
+
+```
+(C) 1995-2022 Jean-loup Gailly and Mark Adler
+
+This software is provided 'as-is', without any express or implied
+warranty.  In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
+
+Jean-loup Gailly        Mark Adler
+jloup@gzip.org          madler@alumni.caltech.edu
+```
+
 ## RE-UE4SS
 
 The Lua mod runs inside [RE-UE4SS](https://github.com/UE4SS-RE/RE-UE4SS) (MIT licence). UE4SS is not part of
-this repository; you install it into the game yourself.
+this repository or the release archive; you install it into the game yourself.
 
 ## Fonts
 
@@ -42,6 +70,7 @@ included in this repository.
 ## ASTRONEER
 
 ASTRONEER is a trademark of System Era Softworks. This project is unofficial and is not affiliated with or
-endorsed by System Era Softworks. The repository contains no game files: `tools/extract.mjs` reads item data
-and icons from your own installed copy of the game into git-ignored files (`data/`, `overlay/catalog.tsv`,
-`overlay/taxonomy.tsv`, `overlay/icons.rgba`). Do not publish those files.
+endorsed by System Era Softworks. Neither the repository nor the release archive contains game files: the
+mod reads item data and icons from your own installed copy of the game into its `data` folder (in the
+repository also `tools/extract.mjs` into the git-ignored `data/` and `mod/Byteboard/data/`). Do not publish
+those files.
