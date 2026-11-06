@@ -308,8 +308,8 @@ void DrawCatalogWindow(UiState& ui, const Live& live) {
     ImGui::SetNextWindowPos({0, 0}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize({std::floor(io.DisplaySize.x * 0.5f), io.DisplaySize.y}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSizeConstraints(kCatalogMinSize, {FLT_MAX, FLT_MAX});
-    ImGui::Begin("Research Desk", nullptr, kWindowFlags);
-    if (DrawHeader("Research Desk", "каталог исследований · F8 — закрыть", live, true)) ui.view.OnCloseButton();
+    ImGui::Begin("Byteboard", nullptr, kWindowFlags);
+    if (DrawHeader("Byteboard", "каталог исследований · F8 — закрыть", live, true)) ui.view.OnCloseButton();
     ImGui::SetCursorPos({kPad, kHeaderH + 16});
     SearchBox("##q", "Название, ресурс или назначение: «батарея», «литий», «rover»…", ui.filter.search, sizeof ui.filter.search);
     DrawFilters(ui.filter, view);

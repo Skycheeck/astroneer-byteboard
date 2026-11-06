@@ -1,6 +1,6 @@
 # Architecture
 
-Research Desk has three parts. They never call each other; the mod and the overlay share files
+Byteboard has three parts. They never call each other; the mod and the overlay share files
 (`docs/PROTOCOL.md`), and the tools prepare the data the overlay shows.
 
 ```

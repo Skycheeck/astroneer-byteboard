@@ -1,4 +1,4 @@
-# Research Desk
+# Byteboard
 
 [English](README.md) · **Русский**
 
@@ -47,7 +47,7 @@
 
 1. Клонируйте репозиторий вместе с Dear ImGui:
    ```bash
-   git clone --recurse-submodules <адрес репозитория>
+   git clone --recurse-submodules https://github.com/Skycheeck/astroneer-byteboard.git
    ```
 2. Поставьте UE4SS и подключите папку модов из клона: [docs/INSTALL-UE4SS.md](docs/INSTALL-UE4SS.md)
    (на английском).

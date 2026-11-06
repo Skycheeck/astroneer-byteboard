@@ -1,4 +1,4 @@
-# Installing UE4SS for Research Desk
+# Installing UE4SS for Byteboard
 
 The mod needs **RE-UE4SS experimental 3.0.1-1183-gcdbc0b66 or newer**. Older builds, including the stable
 3.0.1 release, lack `LoopInGameThreadWithDelay`; the mod then logs that the build is too old and does
@@ -19,7 +19,7 @@ nothing.
    ```
    and add the mods folder of your clone (absolute path, forward slashes) under `[Overrides]`:
    ```ini
-   +ModsFolderPaths = C:/path/to/astroneer-research-desk/ue4ss/mod
+   +ModsFolderPaths = C:/path/to/astroneer-byteboard/ue4ss/mod
    ```
    The mod finds its files relative to its own location, so it must stay inside the clone.
 4. Optional: UE4SS enables its console mods by default (`ConsoleEnablerMod`, `CheatManagerEnablerMod` in

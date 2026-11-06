@@ -1,4 +1,4 @@
--- ResearchBridge: the game side of Research Desk, a UE4SS Lua mod for ASTRONEER 1.42.3.
+-- ResearchBridge: the game side of Byteboard, a UE4SS Lua mod for ASTRONEER 1.42.3.
 -- 1) State: once per second writes the byte balance, the unlocked list and the open printer's
 --    recipe and ingredient counts to out/state.json.
 -- 2) Signals: out/catalog.txt when the backpack research catalog opens or closes, out/printer.txt

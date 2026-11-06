@@ -1,4 +1,4 @@
-// Research Desk in-game overlay. The ResearchBridge Lua mod loads a copy of this DLL into ASTRONEER
+// Byteboard in-game overlay. The ResearchBridge Lua mod loads a copy of this DLL into ASTRONEER
 // (ue4ss/out/ResearchOverlay-active.dll). It hooks IDXGISwapChain::Present and draws a Dear ImGui
 // overlay: the research catalog (F8 or the backpack catalog) and the list of an opened printer. It
 // talks to the mod only through files in <repo>/ue4ss (docs/PROTOCOL.md).
@@ -58,7 +58,7 @@ bool ClaimProcess() {
 
 DWORD WINAPI MainThread(LPVOID) {
     if (!ClaimProcess()) return 0;
-    if (!InitPaths(g_self)) return 0;  // not inside a Research Desk checkout with data: stay off
+    if (!InitPaths(g_self)) return 0;  // not inside a Byteboard checkout with data: stay off
     // Without data the overlay is pointless: when the catalog does not load, nothing is hooked.
     bool loaded = false;
     try {

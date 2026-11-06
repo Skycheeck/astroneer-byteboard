@@ -236,7 +236,7 @@ void DrawPrinterWindow(UiState& ui, const Live& live) {
     ImGui::SetNextWindowPos({backpack ? 0 : io.DisplaySize.x - w, 0}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize({w, io.DisplaySize.y}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSizeConstraints(kPrinterMinSize, {FLT_MAX, FLT_MAX});
-    ImGui::Begin(backpack ? "Research Desk · Backpack" : "Research Desk · Printer", nullptr, kWindowFlags);
+    ImGui::Begin(backpack ? "Byteboard · Backpack" : "Byteboard · Printer", nullptr, kWindowFlags);
     const std::string title = printerIndex >= 0 ? Printers()[printerIndex].label : "Принтер";
     if (DrawHeader(title, nullptr, live, false)) ui.view.OnCloseButton();
     ImGui::SetCursorPos({kPad, kHeaderH + 14});

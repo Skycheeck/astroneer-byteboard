@@ -1,4 +1,4 @@
-# Research Desk
+# Byteboard
 
 **English** · [Русский](README.ru.md)
 
@@ -48,7 +48,7 @@ files are included.
 
 1. Clone the repository together with Dear ImGui:
    ```bash
-   git clone --recurse-submodules <repository URL>
+   git clone --recurse-submodules https://github.com/Skycheeck/astroneer-byteboard.git
    ```
 2. Install UE4SS and point it at the clone's mods folder: [docs/INSTALL-UE4SS.md](docs/INSTALL-UE4SS.md).
 3. Extract the data from your own copy of the game. The repository does not contain it: a script reads it

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(ResearchOverlay CXX)
 
-# In-game overlay for Research Desk, loaded into the game by the ResearchBridge Lua mod.
+# In-game overlay for Byteboard, loaded into the game by the ResearchBridge Lua mod.
 #   ResearchOverlay.dll         the game DLL; it exports nothing
 #   ResearchOverlayPreview.dll  the same overlay plus src/preview_capture.cpp (the ResearchOverlay_Preview
 #                               export and the frame capture); only preview.exe loads it
