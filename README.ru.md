@@ -61,6 +61,7 @@
 1. Поставьте [RE-UE4SS](https://github.com/UE4SS-RE/RE-UE4SS/releases) experimental 3.0.1-1183 или новее:
    [docs/INSTALL-UE4SS.md](docs/INSTALL-UE4SS.md) (на английском).
 2. Скачайте `Byteboard-<версия>.zip` из [Releases](https://github.com/Skycheeck/astroneer-byteboard/releases)
+   или с [Nexus Mods](https://www.nexusmods.com/astroneer/mods/244)
    и скопируйте папку `Byteboard` из архива в `<папка игры>\Astro\Binaries\Win64\ue4ss\Mods\`.
 3. Запустите игру. Файлов игры в архиве нет: при первом запуске и после каждого обновления игры мод сам
    читает названия, рецепты и иконки из вашей копии игры (несколько секунд).

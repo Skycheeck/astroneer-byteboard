@@ -1,19 +1,21 @@
-# Nexus Mods page (draft)
+# Nexus Mods page
 
-Fields for the upload form at https://www.nexusmods.com/astroneer. The description is BBCode, the format
+Published at https://www.nexusmods.com/astroneer/mods/244 (0.1.0, 2026-11-07). The fields below are what the page
+holds; keep them in sync when the page changes. The description is BBCode, the format
 the Nexus editor takes.
 
 | Field | Value |
 |---|---|
 | Name | Byteboard - Research Catalog and Printer Recipes |
 | Category | User Interface |
-| Language | English, Russian, German, Spanish, French, Italian, Dutch, Polish, Brazilian Portuguese and Turkish (the interface follows the game's language) |
+| Author | Skycheeck |
+| Language | Any (the field takes one language; the interface follows the game's language, 10 languages) |
 | Version | 0.1.0 |
 | Game version | Tested on ASTRONEER 1.42.3 only |
-| Tags | AI-Generated Content (required: the code was written by an AI model); UE4SS; Quality of Life |
+| Tags | Quality of Life; User Interface. Generative AI usage: Mod Content AI-Generated and Media AI-Generated (adds the AI-Generated Content and AI Media tags). Nexus has no UE4SS tag |
 | Requirements (off-site) | RE-UE4SS experimental 3.0.1-1183 or newer, https://github.com/UE4SS-RE/RE-UE4SS/releases |
 | Permissions | MIT licence; source at https://github.com/Skycheeck/astroneer-byteboard |
-| Main file | `Byteboard-0.1.0.zip` from the GitHub release (built by GitHub Actions) |
+| Main file | `Byteboard-0.1.0.zip` from the GitHub release (built by GitHub Actions); mod manager download off, since the archive goes into `ue4ss\Mods` by hand |
 
 Summary (max 350 characters):
 
@@ -76,13 +78,47 @@ MIT. Source code, build instructions and technical documents: [url=https://githu
 [line]
 
 [size=5][b]Byteboard (по-русски)[/b][/size]
-Удобный экран исследований и печати прямо в игре: каталог с поиском, группами и фильтрами, изучение в один клик, список рецептов принтера с выбором рецепта и кнопкой «Печатать».
+Удобный экран исследований и печати для ASTRONEER прямо в игре.
 
 [b][color=#ff9900]Код написан нейросетью (Claude от Anthropic) и полностью человеком не проверялся. В игре он проверен лишь частично. Используйте на свой риск и сначала сделайте копию сохранений.[/color][/b]
 
-[b]Проверено[/b] только на ASTRONEER 1.42.3.
-[b]Установка:[/b] поставьте RE-UE4SS experimental 3.0.1-1183 или новее, скопируйте папку [i]Byteboard[/i] из архива в [i]<папка игры>\Astro\Binaries\Win64\ue4ss\Mods\[/i] и запустите игру. При первом запуске мод сам прочитает данные из ваших файлов игры.
-[b]Удаление:[/b] удалите папку [i]ue4ss\Mods\Byteboard[/i].
+[size=4][b]Возможности[/b][/size]
+[list]
+[*][b]Каталог исследований[/b] открывается и закрывается вместе с каталогом исследований рюкзака. Поиск по названию предмета или ресурса («кварц» покажет всё, что из него печатается). Фильтры по назначению, принтеру и статусу. В карточке предмета: рецепт, вся его подгруппа со всех принтеров и кнопка изучения.
+[*][b]Список принтера[/b] появляется, когда вы открываете принтер. Сначала то, что уже можно печатать. Клик по изученному предмету выбирает его рецепт на принтере, затем нажмите «Печатать».
+[*][b]Рюкзак (Q)[/b]: компактный список рецептов принтера рюкзака.
+[*][b]Все предметы принтеров[/b] из ваших файлов игры: рельсы, предметы дополнений и награды за задания, например СВВП и ховерборд. У награды указано, какое задание её даёт.
+[/list]
+Язык интерфейса — как в игре: английский, русский, немецкий, испанский, французский, итальянский, нидерландский, польский, бразильский португальский или турецкий. Названия и описания предметов и названия заданий берутся из ваших файлов игры; остальные тексты интерфейса переведены нейросетью, исправления принимаются на GitHub.
+
+[size=4][b]Требования[/b][/size]
+[list]
+[*]Windows, DirectX 11, одиночная игра. На хосте сетевой игры мод может сработать на принтере другого игрока.
+[*]Проверено только на ASTRONEER 1.42.3: установка, чтение данных игры, каталог, изучение, выбор рецепта и печать, интерфейс на английском и русском. Другие версии игры не проверялись; обновление, которое меняет файлы или функции игры, может сломать мод.
+[*][url=https://github.com/UE4SS-RE/RE-UE4SS/releases]RE-UE4SS[/url] experimental 3.0.1-1183 или новее (файл UE4SS_v3.0.1-*.zip). UE4SS, который ставят менеджеры модов, старее; с этим модом он не проверялся.
+[/list]
+
+[size=4][b]Установка[/b][/size]
+[list=1]
+[*]Установите UE4SS: распакуйте его рядом с Astro-Win64-Shipping.exe в [i]<папка игры>\Astro\Binaries\Win64[/i], а в [i]ue4ss\UE4SS-settings.ini[/i] в разделе [i][EngineVersionOverride][/i] укажите MajorVersion = 4 и MinorVersion = 27.
+[*]Скопируйте папку [i]Byteboard[/i] из архива в [i]<папка игры>\Astro\Binaries\Win64\ue4ss\Mods\[/i].
+[*]Запустите игру. При первом запуске и после каждого обновления игры мод читает названия предметов, рецепты и иконки из ваших файлов игры (несколько секунд). В архиве нет файлов игры.
+[/list]
+
+[size=4][b]Безопасность[/b][/size]
+[list]
+[*]Изучение тратит байты, поэтому работает, только пока отмечена галочка «Изучение разрешено».
+[*]Мод не пишет в сохранения и не вызывает читерские функции игры. Предметы только для творческого режима изучить нельзя.
+[/list]
+
+[size=4][b]Удаление[/b][/size]
+Удалите папку [i]ue4ss\Mods\Byteboard[/i]. Изученные предметы останутся изученными.
+
+[size=4][b]Проблемы[/b][/size]
+Логи: [i]Byteboard\out\overlay.log[/i], [i]Byteboard\out\events.log[/i] и [i]ue4ss\UE4SS.log[/i]. О проблемах пишите на [url=https://github.com/Skycheeck/astroneer-byteboard/issues]GitHub[/url] и прикладывайте эти логи.
+
+[size=4][b]Исходники и лицензия[/b][/size]
+MIT. Исходный код, инструкция по сборке и технические документы: [url=https://github.com/Skycheeck/astroneer-byteboard]github.com/Skycheeck/astroneer-byteboard[/url]. ASTRONEER — товарный знак System Era Softworks; мод неофициальный.
 ```
 
 ## File description

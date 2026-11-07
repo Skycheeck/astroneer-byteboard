@@ -63,6 +63,7 @@ update that changes the game's files or functions can break it.
 1. Install [RE-UE4SS](https://github.com/UE4SS-RE/RE-UE4SS/releases) experimental 3.0.1-1183 or newer:
    [docs/INSTALL-UE4SS.md](docs/INSTALL-UE4SS.md).
 2. Download `Byteboard-<version>.zip` from [Releases](https://github.com/Skycheeck/astroneer-byteboard/releases)
+   or [Nexus Mods](https://www.nexusmods.com/astroneer/mods/244)
    and copy its `Byteboard` folder into `<game>\Astro\Binaries\Win64\ue4ss\Mods\`.
 3. Start the game. The archive contains no game files: on the first start, and after each game update, the
    mod reads the item names, recipes and icons from your own copy of the game (a few seconds).
