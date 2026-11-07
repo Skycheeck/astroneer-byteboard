@@ -28,7 +28,7 @@ public:
 using Bytes = std::vector<uint8_t>;
 using ByteView = std::span<const uint8_t>;
 
-// Text is UTF-8 throughout. Lone UTF-16 surrogates become U+FFFD, as when Node writes such a string.
+// Text is UTF-8 throughout. Lone UTF-16 surrogates become U+FFFD.
 std::string Latin1ToUtf8(ByteView bytes);
 std::string Utf16LeToUtf8(ByteView bytes);
 void AppendUtf8(std::string& out, uint32_t codePoint);

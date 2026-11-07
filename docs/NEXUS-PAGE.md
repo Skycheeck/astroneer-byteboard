@@ -7,8 +7,9 @@ the Nexus editor takes.
 |---|---|
 | Name | Byteboard - Research Catalog and Printer Recipes |
 | Category | User Interface |
-| Language | Russian (the interface); the description is in English and Russian |
+| Language | English, Russian, German, Spanish, French, Italian, Dutch, Polish, Brazilian Portuguese and Turkish (the interface follows the game's language) |
 | Version | 0.1.0 |
+| Game version | Tested on ASTRONEER 1.42.3 only |
 | Tags | AI-Generated Content (required: the code was written by an AI model); UE4SS; Quality of Life |
 | Requirements (off-site) | RE-UE4SS experimental 3.0.1-1183 or newer, https://github.com/UE4SS-RE/RE-UE4SS/releases |
 | Permissions | MIT licence; source at https://github.com/Skycheeck/astroneer-byteboard |
@@ -18,12 +19,12 @@ Summary (max 350 characters):
 
 > A searchable research catalog and printer recipe list drawn inside the game: search, purpose groups,
 > one-click research, pick a printer recipe from a list and print. UE4SS Lua mod plus a Dear ImGui overlay.
-> Russian interface. Written by an AI model.
+> Follows the game's language (10 languages). Written by an AI model.
 
 Before uploading:
 
-- Screenshots and logs only from a Steam copy of the game, and only after the mod was tested on the current
-  Steam version (the mod was developed on 1.42.3).
+- Images, in this order: `docs/screenshots/catalog.webp`, `printer.webp`, `backpack.webp` (taken on 1.42.3, without
+  other overlays). If the form refuses WebP, convert them to PNG first.
 - Do not attach UE4SS, `dwmapi.dll` or any file from the game; the archive from the release has none.
 
 ## Description
@@ -36,15 +37,17 @@ A better research and printer screen for ASTRONEER, drawn inside the game.
 
 [size=4][b]Features[/b][/size]
 [list]
-[*][b]Research catalog[/b]: opens and closes together with the backpack research catalog, or with F8. Search by item name in Russian or English, or by resource ("кварц" shows everything printed from Quartz). Filters by purpose, printer and status. The item card shows the recipe, the subgroup across all printers and a Research button.
+[*][b]Research catalog[/b]: opens and closes together with the backpack research catalog. Search by item or resource name ("quartz" shows everything printed from Quartz). Filters by purpose, printer and status. The item card shows the recipe, the subgroup across all printers and a Research button.
 [*][b]Printer list[/b]: appears when you open a printer. Items you can print come first. Click a researched item to select its recipe on the printer, then Print.
 [*][b]Backpack (Q)[/b]: a compact list of the backpack printer's recipes.
+[*][b]Every printer item[/b], read from your own game files: rails, expansion items and mission rewards such as the VTOL and the hoverboard. A reward shows which mission gives it.
 [/list]
-The interface is in Russian.
+The interface follows the game's language: English, Russian, German, Spanish, French, Italian, Dutch, Polish, Brazilian Portuguese and Turkish. Item names, descriptions and mission titles come from your own game files; the other interface texts are AI translations, corrections are welcome on GitHub.
 
 [size=4][b]Requirements[/b][/size]
 [list]
 [*]Windows, DirectX 11, single-player. On a multiplayer host the mod can act on another player's printer.
+[*]Tested on ASTRONEER 1.42.3 only: install, data extraction, catalog, research, recipe selection and printing, the English and Russian interface. Other game versions have not been tested; an update that changes the game's files or functions can break the mod.
 [*][url=https://github.com/UE4SS-RE/RE-UE4SS/releases]RE-UE4SS[/url] experimental 3.0.1-1183 or newer (the UE4SS_v3.0.1-*.zip asset). The UE4SS that mod managers install is older and has not been tested with this mod.
 [/list]
 
@@ -57,7 +60,7 @@ The interface is in Russian.
 
 [size=4][b]Safety[/b][/size]
 [list]
-[*]Research spends bytes, so it works only while the "Изучение разрешено" (research allowed) checkbox is ticked.
+[*]Research spends bytes, so it works only while the "Research allowed" checkbox is ticked.
 [*]The mod does not write to saves and does not call the game's cheat functions. Creative-only items cannot be researched.
 [/list]
 
@@ -77,6 +80,7 @@ MIT. Source code, build instructions and technical documents: [url=https://githu
 
 [b][color=#ff9900]Код написан нейросетью (Claude от Anthropic) и полностью человеком не проверялся. В игре он проверен лишь частично. Используйте на свой риск и сначала сделайте копию сохранений.[/color][/b]
 
+[b]Проверено[/b] только на ASTRONEER 1.42.3.
 [b]Установка:[/b] поставьте RE-UE4SS experimental 3.0.1-1183 или новее, скопируйте папку [i]Byteboard[/i] из архива в [i]<папка игры>\Astro\Binaries\Win64\ue4ss\Mods\[/i] и запустите игру. При первом запуске мод сам прочитает данные из ваших файлов игры.
 [b]Удаление:[/b] удалите папку [i]ue4ss\Mods\Byteboard[/i].
 ```

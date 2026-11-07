@@ -1,7 +1,7 @@
 // Byteboard in-game overlay. The Byteboard Lua mod loads this DLL (<mod>/Byteboard.dll) into
 // ASTRONEER. On start it extracts the game data from the game's pak when needed (gamedata.cpp), then
-// hooks IDXGISwapChain::Present and draws a Dear ImGui overlay: the research catalog (F8 or the
-// backpack catalog) and the list of an opened printer. It talks to the Lua mod only through files
+// hooks IDXGISwapChain::Present and draws a Dear ImGui overlay: the research catalog (with the
+// backpack research catalog) and the list of an opened printer. It talks to the Lua mod only through files
 // in <mod>/in and <mod>/out (docs/PROTOCOL.md).
 //
 // Threads: Present runs on the game's render thread and does all ImGui and D3D work (render.cpp).
@@ -20,6 +20,7 @@
 #include "catalog.h"
 #include "gamedata.h"
 #include "hooks.h"
+#include "lang.h"
 #include "paths.h"
 #include "util.h"
 
@@ -63,6 +64,7 @@ DWORD WINAPI MainThread(LPVOID) {
     if (!ClaimProcess()) return 0;
     if (!InitPaths(g_self)) return 0;  // not in a Byteboard mod folder: stay off
     Log("Byteboard " RD_VERSION " started");
+    LoadTranslations();
     // Without data the overlay is pointless: when the catalog does not load, nothing is hooked.
     bool loaded = false;
     try {

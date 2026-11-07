@@ -1,4 +1,5 @@
 #include "ui_state.h"
+#include "lang.h"
 
 #include "util.h"
 
@@ -16,9 +17,10 @@ bool Expired(const Pending& p) {
     return SecondsSince(p.sentAt) > p.timeoutSec;
 }
 
-// "10 секунд", "1 секунду", "3 секунды"
+// "10 секунд", "1 секунду", "3 секунды" / "10 seconds", "1 second"
 std::string Seconds(double value) {
     const long long n = (long long)value;
+    if (UiLang() != Lang::Ru) return std::to_string(n) + " s";
     const long long lastTwo = n % 100;
     const long long last = n % 10;
     const char* word = "секунд";
@@ -29,37 +31,39 @@ std::string Seconds(double value) {
     return std::to_string(n) + " " + word;
 }
 
-// Russian text for a result code of results.json (docs/PROTOCOL.md).
+// The text for a result code of results.json (docs/PROTOCOL.md).
 std::string ResultText(const CommandResult& r) {
     struct Entry {
         const char* code;
-        const char* text;
+        const char* ru;
+        const char* en;
     };
     static const Entry kTexts[] = {
-        {"bad_command", "Мод не понял команду."},
-        {"unknown_op", "Мод не знает такой команды."},
-        {"expired", "Команда устарела: мод получил её слишком поздно."},
-        {"not_in_world", "Мир ещё не загружен."},
-        {"disabled", "Изучение выключено: отметьте «Изучение разрешено» вверху."},
-        {"creative_only", "Этот предмет есть только в творческом режиме."},
-        {"already_unlocked", "Уже изучено в игре."},
-        {"class_not_loaded", "Игра ещё не загрузила этот предмет."},
-        {"no_printer", "Принтер не открыт."},
-        {"busy", "Принтер ещё переключает рецепт."},
-        {"not_found", "Этого рецепта нет на принтере."},
-        {"printer_closed", "Принтер закрыли, пока выбирался рецепт."},
-        {"printer_changed", "Открыли другой принтер, пока выбирался рецепт."},
-        {"superseded", "Выбран другой рецепт."},
-        {"timeout", "Рецепт не нашёлся за отведённое время."},
-        {"no_response", "Принтер перестал отвечать."},
-        {"wrong_recipe", "На принтере выбран другой рецепт."},
-        {"cannot_print", "Не хватает ресурсов или энергии."},
+        {"bad_command", "Мод не понял команду.", "The mod did not understand the command."},
+        {"unknown_op", "Мод не знает такой команды.", "The mod does not know this command."},
+        {"expired", "Команда устарела: мод получил её слишком поздно.", "The command expired: the mod got it too late."},
+        {"not_in_world", "Мир ещё не загружен.", "No world is loaded yet."},
+        {"disabled", "Изучение выключено: отметьте «Изучение разрешено» вверху.", "Research is off: tick \"Research allowed\" at the top."},
+        {"creative_only", "Этот предмет есть только в творческом режиме.", "This item exists only in Creative Mode."},
+        {"not_for_sale", "Этот предмет открывает задание или событие, а не байты.", "A mission or an event unlocks this item, not bytes."},
+        {"already_unlocked", "Уже изучено в игре.", "Already researched in the game."},
+        {"class_not_loaded", "Игра ещё не загрузила этот предмет.", "The game has not loaded this item yet."},
+        {"no_printer", "Принтер не открыт.", "No printer is open."},
+        {"busy", "Принтер ещё переключает рецепт.", "The printer is still switching recipes."},
+        {"not_found", "Этого рецепта нет на принтере.", "This printer does not have this recipe."},
+        {"printer_closed", "Принтер закрыли, пока выбирался рецепт.", "The printer was closed while the recipe was being selected."},
+        {"printer_changed", "Открыли другой принтер, пока выбирался рецепт.", "Another printer was opened while the recipe was being selected."},
+        {"superseded", "Выбран другой рецепт.", "Another recipe was selected."},
+        {"timeout", "Рецепт не нашёлся за отведённое время.", "The recipe was not found in time."},
+        {"no_response", "Принтер перестал отвечать.", "The printer stopped responding."},
+        {"wrong_recipe", "На принтере выбран другой рецепт.", "The printer shows a different recipe."},
+        {"cannot_print", "Не хватает ресурсов или энергии.", "Not enough resources or power."},
     };
     for (const Entry& e : kTexts) {
-        if (r.code == e.code) return e.text;
+        if (r.code == e.code) return T(e.ru, e.en);
     }
-    if (r.code == "call_failed") return "Ошибка в игре: " + r.error;
-    return "Не получилось: " + (r.error.empty() ? r.code : r.error);
+    if (r.code == "call_failed") return Format1(T("Ошибка в игре: %s", "Game error: %s"), r.error);
+    return Format1(T("Не получилось: %s", "Failed: %s"), r.error.empty() ? r.code : r.error);
 }
 
 // The print strip is a single short line: its messages have no final period.
@@ -81,10 +85,10 @@ void Send(CommandOp op, const Item& item, Pending& pending, ItemMessage& channel
             channel = {};
             break;
         case SendResult::Status::Busy:
-            channel = {item.id, "Предыдущая команда ещё не обработана.", false, Clock::now()};
+            channel = {item.id, T("Предыдущая команда ещё не обработана.", "The previous command has not been handled yet."), false, Clock::now()};
             break;
         case SendResult::Status::IoError:
-            channel = {item.id, "Не удалось записать команду.", false, Clock::now()};
+            channel = {item.id, T("Не удалось записать команду.", "Could not write the command."), false, Clock::now()};
             break;
     }
 }
@@ -95,12 +99,12 @@ void ResolveUnlock(UiState& ui, const Live& live) {
     const Item* item = FindItem(p.itemId);
     const CommandResult* result = FindResult(live, p.commandId);
     if (item && IsResearched(*item, live)) {
-        Finish(p, ui.unlockMessage, "Изучено в игре.", true);
+        Finish(p, ui.unlockMessage, T("Изучено в игре.", "Researched in the game."), true);
     } else if (result && !result->ok) {
         Finish(p, ui.unlockMessage, ResultText(*result), result->code == "already_unlocked");
     } else if (Expired(p)) {
         // An ok result only means the request reached the game; success is the unlocked list.
-        Finish(p, ui.unlockMessage, "Игра не подтвердила изучение за " + Seconds(p.timeoutSec) + ".", false);
+        Finish(p, ui.unlockMessage, Format1(T("Игра не подтвердила изучение за %s.", "The game did not confirm the research within %s."), Seconds(p.timeoutSec)), false);
     }
 }
 
@@ -121,7 +125,7 @@ void ResolveSelect(UiState& ui, const Live& live) {
     } else if (result) {
         Finish(p, ui.selectMessage, ResultText(*result), false);
     } else if (Expired(p)) {
-        Finish(p, ui.selectMessage, "Мод не ответил за " + Seconds(p.timeoutSec) + ".", false);
+        Finish(p, ui.selectMessage, Format1(T("Мод не ответил за %s.", "The mod did not answer within %s."), Seconds(p.timeoutSec)), false);
     }
 }
 
@@ -129,9 +133,9 @@ void ResolvePrint(UiState& ui, const Live& live) {
     Pending& p = ui.printPending;
     if (!p.Active()) return;
     if (const CommandResult* result = FindResult(live, p.commandId)) {
-        Finish(p, ui.printMessage, result->ok ? "Печать запущена" : StripText(ResultText(*result)), result->ok);
+        Finish(p, ui.printMessage, result->ok ? std::string(T("Печать запущена", "Printing started")) : StripText(ResultText(*result)), result->ok);
     } else if (Expired(p)) {
-        Finish(p, ui.printMessage, "Мод не ответил", false);
+        Finish(p, ui.printMessage, T("Мод не ответил", "The mod did not answer"), false);
     }
 }
 
@@ -142,7 +146,9 @@ bool IsResearched(const Item& item, const Live& live) {
 }
 
 Status StatusOf(const Item& item, const Live& live) {
-    if (IsResearched(item, live) || (item.cost == 0 && !live.connected)) return Status::Researched;
+    if (IsResearched(item, live)) return Status::Researched;
+    if (item.unlock != Unlock::Research) return Status::Reward;
+    if (item.cost == 0 && !live.connected) return Status::Researched;
     return item.cost <= (long long)live.balance ? Status::Affordable : Status::TooExpensive;
 }
 
@@ -198,11 +204,6 @@ void ViewState::OnSignal(const Request& request) {
             if (visible_ && mode_ == Mode::Printer && followsGame_) LeavePrinter();
             break;
     }
-}
-
-void ViewState::OnToggleKey() {
-    if (visible_ && mode_ == Mode::Catalog) HideCatalog();
-    else OpenUserCatalog();
 }
 
 void ViewState::OnEscape() {

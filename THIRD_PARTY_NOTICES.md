@@ -72,5 +72,4 @@ included in this repository.
 ASTRONEER is a trademark of System Era Softworks. This project is unofficial and is not affiliated with or
 endorsed by System Era Softworks. Neither the repository nor the release archive contains game files: the
 mod reads item data and icons from your own installed copy of the game into its `data` folder (in the
-repository also `tools/extract.mjs` into the git-ignored `data/` and `mod/Byteboard/data/`). Do not publish
-those files.
+repository the git-ignored `mod/Byteboard/data/`). Do not publish those files.

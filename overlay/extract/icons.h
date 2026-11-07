@@ -1,5 +1,5 @@
 #pragma once
-// The catalog's icons (tools/steps/build-icons.mjs) and the atlas the overlay reads (tools/lib/atlas.mjs).
+// The catalog's icons and the atlas the overlay reads.
 #include <string>
 #include <unordered_map>
 #include <vector>

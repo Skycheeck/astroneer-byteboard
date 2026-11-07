@@ -48,6 +48,7 @@ One JSON object. Keys may appear in any order; readers look keys up by name.
 | `unlocked` | array of strings | class paths of every unlocked item type, for example `/Game/Items/ItemTypes/Components/Generator_Small.Generator_Small_C` |
 | `unlockedError` | string | set when the unlocked list could not be read completely (then `ok` is false) |
 | `printerCurrent` | string | class path of the world actor class of the recipe shown on the open printer (`PrinterComponent:GetCurrentItem`, an item's `PickupActor`), for example `/Game/Components_Small/Splitter/Splitter_3Way.Splitter_3Way_C`; missing when no printer is open |
+| `language` | string | the game's display language from `KismetInternationalizationLibrary:GetCurrentLanguage` (`ru`, `en`, `de`, ...); missing when unreadable. The overlay picks Russian for `ru*`, English for `en*`, the language of a translation file in `lang/` (exact locale, else the same language: `es-ES` → `es`), and English otherwise |
 | `printerHave` | string | comma-separated counts, one per ingredient of that recipe, in recipe order; `?` for a count that could not be read |
 | `printerCanPrint` | boolean | `PrinterComponent:GetCanPrint` |
 | `gameState`, `playerState` | object | raw research fields, diagnostics only |
@@ -85,6 +86,7 @@ Codes:
 | `not_in_world` | all | no player controller yet |
 | `disabled` | unlock | `in/allow-unlock` does not exist |
 | `creative_only` | unlock | the item exists only in Creative Mode |
+| `not_for_sale` | unlock | the item's `CatalogData.bHiddenUntilUnlocked` is set: a mission or an event unlocks it, not bytes |
 | `already_unlocked` | unlock | |
 | `class_not_loaded` | unlock, select, print | the item class is not loaded in the game |
 | `no_printer` | select, print | no printer panel or backpack printer is open |
@@ -119,7 +121,8 @@ One line: `<id> <unixSec> <op> [<arg>]`
 - `<unixSec>`: Unix time when the command was written. The mod refuses commands older than 8 s
   with `expired`, so a command left behind never runs in a later session.
 - `<op>`: `unlock`, `select` or `print`.
-- `<arg>`: an item type class path, `/Game/Items/ItemTypes/....<Name>_C`. Required for `unlock`
+- `<arg>`: an item type class path under `/Game/` (`/Game/Items/ItemTypes/...`, `/Game/Vehicles/...`,
+  ...), ending in `<Name>_C`. Required for `unlock`
   and `select`; optional for `print`, where it names the recipe the user expects on the printer.
 
 The overlay never overwrites a waiting command: it writes a temporary file and moves it to
@@ -130,28 +133,46 @@ delete fails. At load the mod deletes any `cmd.txt` left from a previous session
 ## `allow-unlock`
 
 An empty marker file. Only `unlock` checks it; `select` and `print` do what the printer's own
-buttons do and are not gated. The overlay checkbox «Изучение разрешено» creates and deletes it.
+buttons do and are not gated. The overlay checkbox "Research allowed" creates and deletes it.
 
 ## Game data
 
 The overlay DLL extracts these from the user's own game files (`overlay/extract`) into `data/` on the
 first start and again whenever the game's pak or the mod version changes; `data/source.txt` records
 what they came from (`pak <size> <last write time>` and `byteboard <version> <DLL size> <DLL write time>`). In the repository
-`node tools/extract.mjs` writes the same files byte for byte, together with its intermediate JSON
-files in the repository's own `data/` folder. None of them is in git or in the release archive.
+`overlayinyteboard-extract.exe` writes the same files. None of them is in git or in the release
+archive.
+
+The extraction reads every item type in the pak (any package with an `ItemCatalogData` export, plus
+their parent classes), keeps those whose catalog category is one of the four printers, and reads every
+mission (`AstroMissionDataAsset`) for the items it rewards (`ResearchRewards`).
 
 - `data/catalog.tsv`: UTF-8, tab-separated, one item per line. The first line starts with `#`
   and lists the column names; readers skip lines that start with `#`. Columns:
-  `id, classPath, nameRu, nameEn, group, subgroup, printer, cost, recipe, icon, description, pickup`.
+  `id, classPath, nameRu, nameEn, group, subgroup, printer, cost, recipe, icon, description, pickup,
+  unlock, source, dlc, subgroupEn, descriptionEn, recipeEn, sourceEn`.
   `group` is a group key from `taxonomy.tsv`; `printer` is a printer key (`Backpack`, `SmFab`,
   `MedFab`, `LgFab`); `recipe` is `<count>× <name>` joined by `, `; `icon` is an index into
-  `icons.rgba`; `pickup` is the class path of the item's world actor class.
-- `data/taxonomy.tsv`: UTF-8, tab-separated. Lines `group	<key>	<label>` in display order,
-  then lines `printer	<key>	<ItemCategory_...>	<label>	<short label>` in display order.
+  `icons.rgba`; `pickup` is the class path of the item's world actor class. `unlock` says how the item
+  is researched: `research` (for bytes), `mission` (hidden until a mission rewards it), `event` (hidden,
+  an account-bound event reward) or `hidden` (hidden, unlocked some other way); readers treat an empty
+  or unknown value as `research`. `source` is the Russian title of the rewarding mission for `mission`;
+  `dlc` names the expansion the item belongs to (`Glitchwalkers`) or is empty. The `...En` columns are the
+  English versions of `subgroup`, `description`, `recipe` and `source`; readers fall back to the Russian
+  cell when one is empty or missing.
+- `data/texts.tsv` (optional): the game texts in more languages. `#id	lang	name	description	recipe	source`,
+  one line per item and locale (`de`, `es-ES`, `es`, `fr`, `it`, `nl`, `pl`, `pt-BR`, `tr`); `recipe` and
+  `source` as in `catalog.tsv`. An empty cell falls back to English.
+- `data/languages.txt`: every locale the game's pak has a translation for, one per line.
+- `data/taxonomy.tsv`: UTF-8, tab-separated. Lines `group	<key>	<label>	<label en>` in display order,
+  then lines `printer	<key>	<ItemCategory_...>	<label>	<short label>	<label en>	<short label en>` in
+  display order. Readers accept lines without the English cells.
 - `data/icons.rgba`: `u32 width, u32 height` (little-endian), then RGBA8 pixels; 64×64 cells,
   16 per row.
-- `<repo>/data/catalog.json` (tools only): every catalog item from the game files, with `classPath` and `pickup`.
-- `<repo>/data/items.json` (tools only): `{ items, groups, printers, icons }`, the input of `catalog.tsv`,
-  `taxonomy.tsv` and `icons.rgba`. `items` is the researchable list, `printers` is
-  `[{key, category, label, short}]`, `groups` is `[[key, label], ...]`, `icons` maps icon names
-  to PNG data URIs.
+
+## Interface translations: `lang/<locale>.tsv`
+
+Shipped with the mod (not extracted). `#` lines are comments; every other line is
+`<English text>\t<translation>`, the English text exactly as the overlay's code has it (`T("…", "<English>")` in
+`overlay/src`, plus the English taxonomy labels). The overlay drops a line whose `%s`/`%d` placeholders differ
+from the English text's; a missing line shows the English text.

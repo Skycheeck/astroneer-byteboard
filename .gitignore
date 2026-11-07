@@ -1,4 +1,4 @@
-# Game-derived data: the DLL extracts it in the game; in the repository `node tools/extract.mjs` or
+# Game-derived data: the DLL extracts it in the game; in the repository
 # overlay\bin\byteboard-extract.exe regenerates it from your own install. Never commit it.
 /data/
 /mod/Byteboard/data/

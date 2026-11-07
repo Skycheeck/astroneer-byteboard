@@ -21,6 +21,8 @@ constexpr const char* kStampFile = "source.txt";
 constexpr const char* kStagingFolder = "new";
 constexpr const wchar_t* kMainPak = L"pakchunk0-WindowsNoEditor.pak";
 const char* const kDataFiles[] = {"catalog.tsv", "taxonomy.tsv", "icons.rgba"};
+// Game texts in more languages; without them those languages show English game texts.
+const char* const kOptionalDataFiles[] = {"texts.tsv", "languages.txt"};
 
 // The game's main pak: the game runs <game>/Astro/Binaries/Win64/<exe>, the pak is
 // <game>/Astro/Content/Paks/pakchunk0-WindowsNoEditor.pak. When that name is missing, the first
@@ -67,16 +69,25 @@ bool HaveDataFiles(const fs::path& folder) {
     return true;
 }
 
-// Moves the three files of a finished extraction from the staging folder into data/. The stamp is
-// removed first, so a move that fails half-way leaves data/ unstamped and the next start extracts
-// again.
+// Moves the files of a finished extraction from the staging folder into data/: the three the overlay
+// needs and the optional ones the extraction wrote (an optional file it did not write is removed, so
+// no stale copy stays). The stamp is removed first, so a move that fails half-way leaves data/
+// unstamped and the next start extracts again.
 bool Publish(const fs::path& staging) {
     DeleteFileW((Paths().data / kStampFile).c_str());
+    const auto move = [&](const char* name) {
+        if (MoveFileExW((staging / name).c_str(), (Paths().data / name).c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) return true;
+        Log(std::string("cannot move the extracted ") + name + " into data (error " + std::to_string(GetLastError()) + ")");
+        return false;
+    };
     for (const char* name : kDataFiles) {
-        if (!MoveFileExW((staging / name).c_str(), (Paths().data / name).c_str(),
-                         MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
-            Log(std::string("cannot move the extracted ") + name + " into data (error " + std::to_string(GetLastError()) + ")");
-            return false;
+        if (!move(name)) return false;
+    }
+    for (const char* name : kOptionalDataFiles) {
+        if (FileExists(staging / name)) {
+            if (!move(name)) return false;
+        } else {
+            DeleteFileW((Paths().data / name).c_str());
         }
     }
     return true;

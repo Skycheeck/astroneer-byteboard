@@ -1,4 +1,5 @@
 #include "ui_widgets.h"
+#include "lang.h"
 
 #include <cfloat>
 
@@ -58,16 +59,40 @@ bool PrimaryButton(const std::string& label, ImVec2 size) {
 void SearchBox(const char* id, const char* hint, char* buf, size_t size) {
     ImGui::SetNextItemWidth(ImGui::GetWindowWidth() - 2 * kPad);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {14, 10});
+    // The clear button below overlaps the field's right end and must win the click.
+    ImGui::SetNextItemAllowOverlap();
     ImGui::InputTextWithHint(id, hint, buf, size);
     ImGui::PopStyleVar();
+    if (!buf[0]) return;
+    const ImVec2 fieldMin = ImGui::GetItemRectMin();
+    const ImVec2 fieldMax = ImGui::GetItemRectMax();
+    const ImVec2 after = ImGui::GetCursorScreenPos();
+    const float side = fieldMax.y - fieldMin.y;
+    const ImVec2 p{fieldMax.x - side, fieldMin.y};
+    ImGui::SetCursorScreenPos(p);
+    ImGui::PushID(id);
+    if (ImGui::InvisibleButton("clear", {side, side})) buf[0] = 0;
+    const bool hovered = ImGui::IsItemHovered();
+    ImGui::PopID();
+    if (hovered) ImGui::SetTooltip("%s", T("Очистить", "Clear"));
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    const ImVec2 c = p + ImVec2(side / 2, side / 2);
+    const float r = 6;
+    const uint32_t color = Col(hovered ? C::fg : C::muted);
+    dl->AddLine(c - ImVec2(r, r), c + ImVec2(r, r), color, 2);
+    dl->AddLine(c + ImVec2(-r, r), c + ImVec2(r, -r), color, 2);
+    ImGui::SetCursorScreenPos(after);
 }
 
 void KeyValue(const char* key, const std::string& value, uint32_t rgb) {
     const float x = ImGui::GetCursorPosX();
+    const std::string caps = Upper(key);
+    // Translated keys can be longer than the Russian and English ones.
+    const float keyW = TextWidth(DisplayFont(), 14, caps);
     ImGui::PushFont(DisplayFont(), 14);
-    ImGui::TextColored(Vec(C::muted), "%s", Upper(key).c_str());
+    ImGui::TextColored(Vec(C::muted), "%s", caps.c_str());
     ImGui::PopFont();
-    ImGui::SameLine(x + 90);
+    ImGui::SameLine(x + std::max(90.0f, keyW + 14));
     Wrapped(rgb, value);
 }
 
@@ -93,25 +118,28 @@ bool DrawHeader(const std::string& title, const char* subtitle, const Live& live
     const bool closeClicked = ImGui::InvisibleButton("close", {30, 34});
     wdl->AddText(BodyFont(), 30, wp + ImVec2(x - 26, 12), Col(ImGui::IsItemHovered() ? C::accent : C::muted), "×");
     x -= 30 + 22;
-    const std::string bytes = FormatInt((long long)live.balance);
+    const std::string bytes = Number((long long)live.balance);
     const float bytesW = TextWidth(DisplayFont(), kHeaderTitleSize, bytes);
     wdl->AddText(DisplayFont(), kHeaderTitleSize, wp + ImVec2(x - bytesW, 14), Col(C::accent), bytes.c_str());
     x -= bytesW + 10;
-    const float labelW = TextWidth(DisplayFont(), 13, "БАЙТЫ");
-    wdl->AddText(DisplayFont(), 13, wp + ImVec2(x - labelW, 28), Col(C::muted), "БАЙТЫ");
+    const char* bytesLabel = T("БАЙТЫ", "BYTES");
+    const float labelW = TextWidth(DisplayFont(), 13, bytesLabel);
+    wdl->AddText(DisplayFont(), 13, wp + ImVec2(x - labelW, 28), Col(C::muted), bytesLabel);
     if (!withAllowSwitch) return closeClicked;
 
     x -= labelW + 26;
     wdl->AddLine(wp + ImVec2(x, 16), wp + ImVec2(x, kHeaderH - 16), Col(C::line));
     x -= 18;
-    const char* connection = live.connected ? "игра подключена" : "нет связи с модом";
+    const char* connection = live.connected ? T("игра подключена", "game connected") : T("нет связи с модом", "no connection to the mod");
     const float connectionW = TextWidth(BodyFont(), 14, connection);
     wdl->AddText(BodyFont(), 14, wp + ImVec2(x - connectionW, 34), Col(live.connected ? C::muted : C::warn), connection);
     bool allow = live.allowUnlock;
-    const float checkboxW = ImGui::GetFrameHeight() + 8 + TextWidth(BodyFont(), 16, "Изучение разрешено");
+    const char* allowLabel = T("Изучение разрешено", "Research allowed");
+    const float checkboxW = ImGui::GetFrameHeight() + 8 + TextWidth(BodyFont(), 16, allowLabel);
     ImGui::SetCursorPos({x - checkboxW, 6});
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {4, 3});
-    if (ImGui::Checkbox("Изучение разрешено", &allow)) SetAllowUnlock(allow);
+    // "###allow" keeps the checkbox's ID when the label changes language.
+    if (ImGui::Checkbox((std::string(allowLabel) + "###allow").c_str(), &allow)) SetAllowUnlock(allow);
     ImGui::PopStyleVar();
     return closeClicked;
 }
@@ -154,7 +182,33 @@ bool ChipRow::Chip(const char* id, const std::string& text, int count, bool sele
 }
 
 std::string CostText(const Item& item, Status status) {
-    return status == Status::Researched ? "изучено" : FormatInt(item.cost) + " Б";
+    if (status == Status::Researched) return T("изучено", "researched");
+    switch (item.unlock) {
+        case Unlock::Mission:
+            return T("за задание", "mission");
+        case Unlock::Event:
+            return T("за событие", "event");
+        case Unlock::Hidden:
+            return T("особое", "special");
+        case Unlock::Research:
+            break;
+    }
+    return Bytes(item.cost);
+}
+
+std::string UnlockText(const Item& item) {
+    switch (item.unlock) {
+        case Unlock::Mission:
+            if (SourceOf(item).empty()) return T("Награда за задание", "Mission reward");
+            return Format1(T("Награда за задание «%s»", "Reward of the mission \"%s\""), SourceOf(item));
+        case Unlock::Event:
+            return T("Награда за событие, привязана к аккаунту", "Event reward, bound to the account");
+        case Unlock::Hidden:
+            return T("Открывается в игре особым способом", "Unlocked in the game in a special way");
+        case Unlock::Research:
+            break;
+    }
+    return Format1(T("Исследование за %s", "Research for %s"), Bytes(item.cost));
 }
 
 uint32_t IconTint(Status status, IconContext context) {
@@ -163,7 +217,7 @@ uint32_t IconTint(Status status, IconContext context) {
         return status == Status::Affordable ? C::iconMuted : C::iconFaint;
     }
     if (status == Status::Affordable) return C::iconActive;
-    return status == Status::TooExpensive ? C::iconMuted : C::iconFaint;
+    return status == Status::TooExpensive || status == Status::Reward ? C::iconMuted : C::iconFaint;
 }
 
 std::string IngredientLabel(const Ingredient& ingredient) {

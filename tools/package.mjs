@@ -11,7 +11,9 @@ import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
-import {ROOT} from './lib/paths.mjs';
+import {fileURLToPath} from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const MOD = 'mod/Byteboard';
 const DLL = 'overlay/bin/Byteboard.dll';

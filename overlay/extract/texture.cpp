@@ -222,7 +222,7 @@ Bytes DecodeToRgba(const Texture& texture) {
 
 // Box filter with fractional source boxes, so sizes that do not divide evenly work too (the tapper
 // icon is 266x266). Colours are averaged weighted by alpha, so transparent texels do not darken the
-// edges. The arithmetic is dxt.mjs's, in doubles and in the same order, so the bytes match.
+// edges. The arithmetic stays in doubles, in this order, so the output is the same on every machine.
 Bytes ResizeBox(const Bytes& pixels, int width, int height, int targetWidth, int targetHeight) {
     Bytes out((size_t)targetWidth * targetHeight * 4);
     const double scaleX = (double)width / targetWidth;

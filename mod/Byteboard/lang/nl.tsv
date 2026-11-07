@@ -1,0 +1,139 @@
+# Byteboard interface translation: Dutch (nl).
+# One line per text: the English text, a tab, the translation. Keep %s and %d exactly; lines starting with # are comments.
+Purpose	Doel
+All	Alle
+Printed at	Geprint met
+Status	Status
+%s left	nog %s
+Nothing found. Try another word or clear a filter.	Niets gevonden. Probeer een ander woord of wis een filter.
+%s: all printers	%s: alle printers
+%s. It cannot be bought for bytes.	%s. Niet te onderzoeken met bytes.
+Research for %s	Onderzoeken voor %s
+Sent to the game, waiting for confirmation…	Naar het spel gestuurd, wacht op bevestiging…
+Waiting for the game to confirm "%s"…	Wacht tot het spel “%s” bevestigt…
+No connection to the Byteboard Lua mod.	Geen verbinding met de Byteboard-Lua-mod.
+Research is off: tick "Research allowed" at the top.	Onderzoek staat uit: vink bovenaan “Onderzoek toegestaan” aan.
+%s short.	Nog %s tekort.
+Item	Item
+Select an item to see its description, recipe and the same item at other printers.	Selecteer een item om de beschrijving, het recept en hetzelfde item bij andere printers te zien.
+Search also finds resources: "quartz" shows everything printed from it.	Zoeken vindt ook hulpbronnen: “kwarts” toont alles wat ermee wordt geprint.
+Cost	Kosten
+Source	Bron
+Printer	Printer
+Group	Groep
+Recipe	Recept
+Description	Omschrijving
+research catalog	onderzoekscatalogus
+Name, resource or purpose: "battery", "lithium", "rover"…	Naam, hulpbron of doel: “batterij”, “lithium”, “verkenner”…
+Affordable	Betaalbaar
+Too expensive	Te duur
+Rewards	Beloningen
+Researched	Onderzocht
+Open in the catalog	Openen in de catalogus
+selecting on the printer…	selecteren op de printer…
+on the printer · %s	op de printer · %s
+selecting…	selecteren…
+Not enough resources or power	Niet genoeg hulpbronnen of stroom
+The printer's recipe is not recognised	Recept op de printer niet herkend
+No connection to the mod	Geen verbinding met de mod
+PRINT	PRINTEN
+Ready to print	Klaar om te printen
+Not researched	Niet onderzocht
+Nothing found.	Niets gevonden.
+Search by name or resource…	Zoeken op naam of hulpbron…
+This printer is not recognised (%s).	Deze printer wordt niet herkend (%s).
+Game error: %s	Spelfout: %s
+Failed: %s	Mislukt: %s
+The previous command has not been handled yet.	De vorige opdracht is nog niet verwerkt.
+Could not write the command.	Kan de opdracht niet wegschrijven.
+Researched in the game.	Onderzocht in het spel.
+The game did not confirm the research within %s.	Het spel heeft het onderzoek niet binnen %s bevestigd.
+The mod did not answer within %s.	De mod heeft niet binnen %s geantwoord.
+Printing started	Printen gestart
+The mod did not answer	De mod heeft niet geantwoord
+The mod did not understand the command.	De mod begreep de opdracht niet.
+The mod does not know this command.	De mod kent deze opdracht niet.
+The command expired: the mod got it too late.	De opdracht is verlopen: de mod kreeg hem te laat.
+No world is loaded yet.	Er is nog geen wereld geladen.
+This item exists only in Creative Mode.	Dit item bestaat alleen in de creatieve modus.
+A mission or an event unlocks this item, not bytes.	Dit item wordt vrijgespeeld door een missie of evenement, niet met bytes.
+Already researched in the game.	Al onderzocht in het spel.
+The game has not loaded this item yet.	Het spel heeft dit item nog niet geladen.
+No printer is open.	Er is geen printer geopend.
+The printer is still switching recipes.	De printer wisselt nog van recept.
+This printer does not have this recipe.	Deze printer heeft dit recept niet.
+The printer was closed while the recipe was being selected.	De printer werd gesloten tijdens het selecteren van het recept.
+Another printer was opened while the recipe was being selected.	Er werd een andere printer geopend tijdens het selecteren van het recept.
+Another recipe was selected.	Er is een ander recept geselecteerd.
+The recipe was not found in time.	Het recept werd niet op tijd gevonden.
+The printer stopped responding.	De printer reageert niet meer.
+The printer shows a different recipe.	De printer toont een ander recept.
+Not enough resources or power.	Niet genoeg hulpbronnen of stroom.
+Clear	Wissen
+BYTES	BYTES
+game connected	spel verbonden
+no connection to the mod	geen verbinding met de mod
+Research allowed	Onderzoek toegestaan
+researched	onderzocht
+mission	missie
+event	evenement
+special	speciaal
+Mission reward	Missiebeloning
+Reward of the mission "%s"	Beloning van de missie “%s”
+Event reward, bound to the account	Evenementbeloning, gekoppeld aan het account
+Unlocked in the game in a special way	Wordt in het spel op een speciale manier vrijgespeeld
+Other	Overig
+Other printer	Andere printer
+other	ander
+Power	Stroom
+Oxygen	Zuurstof
+Production	Productie
+Storage	Opslag
+Platforms & Base	Platforms & basis
+Automation	Automatisering
+Transport	Transport
+Terraforming	Terraforming
+Exploration & Gear	Verkenning & uitrusting
+Leisure & Decor	Ontspanning & decor
+Backpack	Rugzak
+backpack	rugzak
+Small Printer	Kleine printer
+small	klein
+Medium Printer	Middelgrote printer
+medium	middel
+Large Printer	Grote printer
+large	groot
+Terrain Tool Mods	Terreinmods
+Mechanisms	Mechanismen
+Printers	Printers
+Solar Panels	Zonnepanelen
+Print Filters	Printerfilters
+Tethers	Boeien
+Scanners & Beacons	Scanners & bakens
+Batteries	Batterijen
+Canisters	Blikken
+Generators	Generatoren
+Lights	Lampen
+Explosives	Explosieven
+Wind Turbines	Windturbines
+Movement	Beweging
+Trade & Packaging	Ruilen & verpakken
+Shelters	Schuilgelegenheden
+Platforms	Platforms
+Shuttles	Shuttles
+Sensor Rings	Sensorringen
+Landing Pads	Landingsplatforms
+Vehicles	Voertuigen
+Railway	Spoorwegen
+Shredders	Shredders
+Processing	Verwerking
+Aircraft	Vliegtuigen
+Research	Onderzoek
+Vehicle Attachments	Voertuigaccessoires
+Sensors & Logic	Sensoren & logica
+Wiring	Bedrading
+Key Items	Sleutelitems
+Vehicle Drills	Voertuigboren
+Thrusters	Stuwraketten
+Walkways	Paden
+Megastructures	Megastructuren

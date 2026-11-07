@@ -37,20 +37,6 @@ bool IsJsSpace(uint32_t c) {
     }
 }
 
-std::u16string ToUtf16(std::string_view text) {
-    std::u16string out;
-    for (size_t i = 0; i < text.size();) {
-        const uint32_t c = DecodeUtf8(text, i);
-        if (c >= 0x10000) {
-            out += (char16_t)(0xD800 + ((c - 0x10000) >> 10));
-            out += (char16_t)(0xDC00 + ((c - 0x10000) & 0x3FF));
-        } else {
-            out += (char16_t)c;
-        }
-    }
-    return out;
-}
-
 bool IsDigit(char c) { return c >= '0' && c <= '9'; }
 
 // Array.prototype.join(","), which String() of an array is.
@@ -274,38 +260,6 @@ std::string_view JsTrim(std::string_view text) {
         end = start;
     }
     return text.substr(begin, end - begin);
-}
-
-bool JsStringLess(std::string_view a, std::string_view b) {
-    return ToUtf16(a) < ToUtf16(b);
-}
-
-std::vector<size_t> JsKeyOrder(const std::vector<std::string>& keys) {
-    auto arrayIndex = [](const std::string& key, uint64_t& index) {
-        if (key.empty() || key.size() > 10 || (key.size() > 1 && key[0] == '0')) return false;
-        index = 0;
-        for (char c : key) {
-            if (!IsDigit(c)) return false;
-            index = index * 10 + (uint64_t)(c - '0');
-        }
-        return index < 4294967295ull;
-    };
-    std::vector<std::pair<uint64_t, size_t>> indexed;
-    std::vector<size_t> named;
-    for (size_t k = 0; k < keys.size(); ++k) {
-        uint64_t index = 0;
-        if (arrayIndex(keys[k], index)) {
-            indexed.push_back({index, k});
-        } else {
-            named.push_back(k);
-        }
-    }
-    std::sort(indexed.begin(), indexed.end());
-    std::vector<size_t> order;
-    order.reserve(keys.size());
-    for (const auto& entry : indexed) order.push_back(entry.second);
-    order.insert(order.end(), named.begin(), named.end());
-    return order;
 }
 
 }  // namespace rd::extract

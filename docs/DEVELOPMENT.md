@@ -7,7 +7,7 @@
 | `mod/Byteboard` | the mod folder exactly as it ships: `enabled.txt`, `README.txt`, `Scripts/` (Lua). The build copies `Byteboard.dll` here; the game creates `in/`, `out/`, `data/` (all ignored by git) |
 | `mod/mods.txt` | for UE4SS when it loads `mod/` through `+ModsFolderPaths` |
 | `overlay/` | the DLL: `src/` (overlay), `extract/` (game data extraction), `preview/`, Dear ImGui and zlib submodules |
-| `tools/` | the Node reference extractor and `package.mjs` |
+| `tools/` | `package.mjs`, which builds the release archive (Node.js) |
 
 ## Build
 
@@ -36,16 +36,16 @@ Do not keep a copy in `ue4ss\Mods\Byteboard` at the same time.
 ## Game data
 
 In the game the DLL extracts the data itself (`overlay/src/gamedata.cpp`, `overlay/extract/`). Outside the
-game, for `preview.exe`, write it into `mod\Byteboard\data` with either extractor:
+game, for `preview.exe`, write it into `mod\Byteboard\data` with the same code from the command line:
 
 ```powershell
 overlay\bin\byteboard-extract.exe '<game>\Astro\Content\Paks\pakchunk0-WindowsNoEditor.pak' mod\Byteboard\data
-$env:ASTRONEER_PAK = '<game>\Astro\Content\Paks\pakchunk0-WindowsNoEditor.pak'; node tools/extract.mjs
 ```
 
-Both must produce identical files; after any change to either extractor, run both and compare the three
-files byte for byte. A single Node step runs with `node tools/steps/<step>.mjs`. The groups and the rules
-for which items are research entries are in `tools/lib/taxonomy.mjs` and its C++ port in `overlay/extract`.
+The groups, the rules for which items are research entries and how an item unlocks are in
+`overlay/extract/taxonomy.cpp` and `overlay/extract/catalog.cpp`. After a change, compare the new
+`catalog.tsv` with the previous one and check that only the intended rows changed. (Until 0.1.0 a Node
+copy of the extraction in `tools/` served as the reference; the C++ port matched it byte for byte.)
 
 ## Preview without the game
 
@@ -57,7 +57,15 @@ overlay/bin/preview.exe --unload-test                                # the DLL s
 ```
 
 `preview.exe` opens a D3D11 window with the game's window class, loads `ByteboardPreview.dll` and saves one
-frame. It reads the files in `mod/Byteboard`, so it shows the last state the mod wrote. Run it from Git
+frame. Set `BYTEBOARD_LANG` to a locale (`en`, `ru`, `de`, `pt-BR`, ...) to choose the interface language
+(otherwise the Windows display language decides, since no game reports one).
+
+## Translations
+
+Interface texts are `T("<Russian>", "<English>")` pairs in `overlay/src`; other languages are
+`mod/Byteboard/lang/<locale>.tsv` (format in [PROTOCOL.md](PROTOCOL.md)). After adding or changing a text,
+add its English line to every file there; a file for a new language needs only to exist to be used,
+and the game's own item texts for it come from `data/texts.tsv` when the game ships that language. It reads the files in `mod/Byteboard`, so it shows the last state the mod wrote. Run it from Git
 Bash: Windows PowerShell 5.1 drops an empty `""` argument.
 
 ## Release
@@ -74,7 +82,7 @@ release with the archive.
 ## Checks before a commit
 
 - `overlay\build.cmd` builds without warnings in `overlay/src` and `overlay/extract`.
-- `byteboard-extract.exe` and `node tools/extract.mjs` give identical files.
+- `byteboard-extract.exe` runs on the game's pak, and `catalog.tsv` differs from the previous one only as intended.
 - `preview.exe --unload-test` passes; previews of the catalog, an item and each printer look right.
 - `dumpbin /exports overlay\bin\Byteboard.dll` shows no exports.
 - Every `.lua` file parses (for example with the `luaparse` npm package, Lua 5.3 mode) and uses only UE4SS
@@ -89,7 +97,7 @@ The mod can only be tested in the game. After a change:
 2. Opening and closing the backpack catalog shows and hides the catalog window.
 3. Opening a printer panel and the backpack (Q) shows the printer list; closing hides it.
 4. Selecting a recipe moves the printer to it; printing starts.
-5. Research is refused while «Изучение разрешено» is off, and works when it is on.
+5. Research is refused while "Research allowed" is off, and works when it is on.
 6. `out/events.log` has no errors.
 
 ## Logs

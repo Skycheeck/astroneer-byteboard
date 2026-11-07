@@ -12,7 +12,8 @@
 
 namespace rd {
 
-enum class Status { Researched, Affordable, TooExpensive };
+// Reward: not researched and not for sale (a mission, an event or something else unlocks it).
+enum class Status { Researched, Affordable, TooExpensive, Reward };
 
 bool IsResearched(const Item& item, const Live& live);
 // Researched = in the game's unlocked list. A zero research cost does not mean researched (Large
@@ -25,7 +26,7 @@ enum class Mode { Catalog, Printer };
 
 // Which overlay window is shown and why. The game's research catalog and a printer can be open at
 // once: the last one opened is shown, and when one closes or is hidden the overlay falls back to
-// the other while it is still open. A catalog the user opened (F8 or "open in catalog") stays
+// the other while it is still open. A catalog the user opened ("open in catalog" from a printer list) stays
 // until the user hides it; a view that follows a game panel closes with that panel.
 class ViewState {
 public:
@@ -37,7 +38,6 @@ public:
     bool OwnsEscape() const { return visible_ && !followsGame_; }
 
     void OnSignal(const Request& request);
-    void OnToggleKey();  // F8: hide the catalog, or bring it up (also over a printer list)
     void OnEscape();
     void OnCloseButton();
     void OpenUserCatalog();
@@ -57,7 +57,7 @@ private:
     bool followsGame_ = false;
 };
 
-enum class StatusFilter { All, Affordable, TooExpensive, Researched };
+enum class StatusFilter { All, Affordable, TooExpensive, Reward, Researched };
 
 struct CatalogFilter {
     char search[128] = "";

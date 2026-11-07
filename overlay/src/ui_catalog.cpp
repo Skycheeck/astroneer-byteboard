@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include "ui_widgets.h"
+#include "lang.h"
 #include "ui_windows.h"
 #include "util.h"
 
@@ -43,6 +44,8 @@ bool StatusMatches(Status status, StatusFilter filter) {
             return status == Status::Affordable;
         case StatusFilter::TooExpensive:
             return status == Status::TooExpensive;
+        case StatusFilter::Reward:
+            return status == Status::Reward;
         case StatusFilter::Researched:
             return status == Status::Researched;
     }
@@ -58,13 +61,15 @@ bool Passes(const CatalogView& view, size_t i, int group, int printer, StatusFil
 
 struct StatusChip {
     StatusFilter filter;
-    const char* label;
+    const char* ru;
+    const char* en;
 };
 constexpr StatusChip kStatusChips[] = {
-    {StatusFilter::All, "Все"},
-    {StatusFilter::Affordable, "Хватает байтов"},
-    {StatusFilter::TooExpensive, "Не хватает"},
-    {StatusFilter::Researched, "Изучено"},
+    {StatusFilter::All, "Все", "All"},
+    {StatusFilter::Affordable, "Хватает байтов", "Affordable"},
+    {StatusFilter::TooExpensive, "Не хватает", "Too expensive"},
+    {StatusFilter::Reward, "Награды", "Rewards"},
+    {StatusFilter::Researched, "Изучено", "Researched"},
 };
 
 void DrawFilters(CatalogFilter& filter, const CatalogView& view) {
@@ -76,29 +81,29 @@ void DrawFilters(CatalogFilter& filter, const CatalogView& view) {
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {8, 4});
     ImGui::Dummy({0, 2});
     {
-        ChipRow row("Назначение");
-        if (row.Chip("g-all", "Все", count(-1, filter.printer, filter.status), filter.group < 0)) filter.group = -1;
+        ChipRow row(T("Назначение", "Purpose"));
+        if (row.Chip("g-all", T("Все", "All"), count(-1, filter.printer, filter.status), filter.group < 0)) filter.group = -1;
         for (int g = 0; g < (int)Groups().size(); ++g) {
             const std::string id = "g" + std::to_string(g);
             const bool selected = filter.group == g;
-            if (row.Chip(id.c_str(), Groups()[g].label, count(g, filter.printer, filter.status), selected)) filter.group = selected ? -1 : g;
+            if (row.Chip(id.c_str(), LabelOf(Groups()[g]), count(g, filter.printer, filter.status), selected)) filter.group = selected ? -1 : g;
         }
     }
     {
-        ChipRow row("Где печатать");
-        if (row.Chip("p-all", "Все", count(filter.group, -1, filter.status), filter.printer < 0)) filter.printer = -1;
+        ChipRow row(T("Где печатать", "Printed at"));
+        if (row.Chip("p-all", T("Все", "All"), count(filter.group, -1, filter.status), filter.printer < 0)) filter.printer = -1;
         for (int p = 0; p < (int)Printers().size(); ++p) {
             const std::string id = "p" + std::to_string(p);
             const bool selected = filter.printer == p;
-            if (row.Chip(id.c_str(), Printers()[p].label, count(filter.group, p, filter.status), selected)) filter.printer = selected ? -1 : p;
+            if (row.Chip(id.c_str(), LabelOf(Printers()[p]), count(filter.group, p, filter.status), selected)) filter.printer = selected ? -1 : p;
         }
     }
     {
-        ChipRow row("Статус");
+        ChipRow row(T("Статус", "Status"));
         for (size_t s = 0; s < std::size(kStatusChips); ++s) {
             const StatusChip& chip = kStatusChips[s];
             const std::string id = "s" + std::to_string(s);
-            if (row.Chip(id.c_str(), chip.label, count(filter.group, filter.printer, chip.filter), filter.status == chip.filter)) {
+            if (row.Chip(id.c_str(), T(chip.ru, chip.en), count(filter.group, filter.printer, chip.filter), filter.status == chip.filter)) {
                 filter.status = chip.filter;
             }
         }
@@ -125,12 +130,12 @@ void Card(UiState& ui, const Item& it, Status status, float w) {
     const float textX = tp.x + tile + 11;
     const float textW = p.x + w - 12 - textX;
     dl->PushClipRect(p, p + size, true);
-    dl->AddText(BoldFont(), 15.5f, {textX, p.y + 9}, Col(researched ? C::muted : C::fg), it.nameRu.c_str(), nullptr, textW);
+    dl->AddText(BoldFont(), 15.5f, {textX, p.y + 9}, Col(researched ? C::muted : C::fg), NameOf(it).c_str(), nullptr, textW);
     const std::string cost = CostText(it, status);
     const float footerY = p.y + kCardH - 9 - 15;
     dl->AddText(BoldFont(), 14, {textX, footerY}, Col(status == Status::Affordable ? C::accent : C::muted), cost.c_str());
     const float costW = TextWidth(BoldFont(), 14, cost);
-    dl->AddText(BodyFont(), 14, {textX + costW + 8, footerY}, Col(C::faint), Printers()[it.printerIndex].shortLabel.c_str());
+    dl->AddText(BodyFont(), 14, {textX + costW + 8, footerY}, Col(C::faint), ShortLabelOf(Printers()[it.printerIndex]).c_str());
     dl->PopClipRect();
     if (clicked) ui.selectedId = it.id;
     if (selected && ui.scrollToSelected) {
@@ -157,22 +162,24 @@ void DrawGrid(UiState& ui, const CatalogView& view) {
         shown += (int)rows.size();
         long long left = 0;
         for (size_t i : rows) {
-            if (view.status[i] != Status::Researched) left += items[i].cost;
+            if (view.status[i] == Status::Affordable || view.status[i] == Status::TooExpensive) left += items[i].cost;
         }
-        const std::string& label = Groups()[g].label;
+        const std::string& label = LabelOf(Groups()[g]);
         Caps(label.c_str(), 22, C::accent);
         ImGui::SameLine(0, 12);
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 6);
-        ImGui::TextColored(Vec(C::muted), "%d · осталось %s Б", (int)rows.size(), FormatInt(left).c_str());
+        ImGui::TextColored(Vec(C::muted), "%d · %s", (int)rows.size(), Format1(T("осталось %s", "%s left"), Bytes(left)).c_str());
         std::vector<std::string> subgroups;
         for (size_t i : rows) {
             if (std::find(subgroups.begin(), subgroups.end(), items[i].subgroup) == subgroups.end()) subgroups.push_back(items[i].subgroup);
         }
+        // Subgroups are told apart by their Russian label (always present) and shown in the
+        // interface language.
         for (const std::string& subgroup : subgroups) {
-            if (subgroups.size() > 1 || subgroup != label) Caps(subgroup.c_str(), 14, C::muted);
             int n = 0;
             for (size_t i : rows) {
                 if (items[i].subgroup != subgroup) continue;
+                if (n == 0 && (subgroups.size() > 1 || subgroup != Groups()[g].label)) Caps(SubgroupOf(items[i]).c_str(), 14, C::muted);
                 if (n++ % cols) ImGui::SameLine(0, kGap);
                 Card(ui, items[i], view.status[i], cardW);
             }
@@ -181,7 +188,7 @@ void DrawGrid(UiState& ui, const CatalogView& view) {
     }
     if (!shown) {
         ImGui::Dummy({0, 40});
-        ImGui::TextColored(Vec(C::muted), "Ничего не нашлось. Попробуйте другое слово или снимите фильтр.");
+        ImGui::TextColored(Vec(C::muted), "%s", T("Ничего не нашлось. Попробуйте другое слово или снимите фильтр.", "Nothing found. Try another word or clear a filter."));
     }
     ui.scrollToSelected = false;  // the selected item is not in the grid (filtered out or unknown)
 }
@@ -190,7 +197,7 @@ void DrawGrid(UiState& ui, const CatalogView& view) {
 void DrawRecipeChips(UiState& ui, const Item& it) {
     ImDrawList* dl = ImGui::GetWindowDrawList();
     Flow flow(6, 0, -1);
-    for (const Ingredient& ingredient : it.ingredients) {
+    for (const Ingredient& ingredient : IngredientsOf(it)) {
         const std::string label = IngredientLabel(ingredient);
         const ImVec2 size = ImGui::CalcTextSize(label.c_str()) + ImVec2(16, 10);
         flow.Next(size.x);
@@ -212,7 +219,7 @@ void DrawKin(UiState& ui, const Item& selected, const Live& live) {
     }
     if (kin.size() < 2) return;
     ImGui::Spacing();
-    Caps((selected.subgroup + ": все принтеры").c_str(), 14, C::accent);
+    Caps(Format1(T("%s: все принтеры", "%s: all printers"), SubgroupOf(selected)).c_str(), 14, C::accent);
     ImDrawList* dl = ImGui::GetWindowDrawList();
     for (const Item* k : kin) {
         ImGui::PushID(k->id.c_str());
@@ -222,9 +229,9 @@ void DrawKin(UiState& ui, const Item& selected, const Live& live) {
         if (ImGui::InvisibleButton("kin", {w, 30})) ui.selectedId = k->id;
         if (isSelected || ImGui::IsItemHovered()) dl->AddRectFilled(p, p + ImVec2(w, 30), Col(isSelected ? C::accentSoft : C::panelAlt), 3);
         if (isSelected) dl->AddRectFilled(p, p + ImVec2(3, 30), Col(C::accent));
-        dl->AddText(BodyFont(), 15, p + ImVec2(10, 6), Col(C::fg), k->nameRu.c_str());
-        const float nameW = TextWidth(BodyFont(), 15, k->nameRu);
-        dl->AddText(BodyFont(), 13, p + ImVec2(16 + nameW, 8), Col(C::faint), Printers()[k->printerIndex].shortLabel.c_str());
+        dl->AddText(BodyFont(), 15, p + ImVec2(10, 6), Col(C::fg), NameOf(*k).c_str());
+        const float nameW = TextWidth(BodyFont(), 15, NameOf(*k));
+        dl->AddText(BodyFont(), 13, p + ImVec2(16 + nameW, 8), Col(C::faint), ShortLabelOf(Printers()[k->printerIndex]).c_str());
         const Status status = StatusOf(*k, live);
         const std::string cost = CostText(*k, status);
         const float costW = TextWidth(BoldFont(), 14, cost);
@@ -234,23 +241,27 @@ void DrawKin(UiState& ui, const Item& selected, const Live& live) {
 }
 
 void DrawResearchButton(UiState& ui, const Item& selected, Status status, const Live& live) {
-    if (status != Status::Researched) {
+    if (status == Status::Reward) {
+        // The game's own catalog cannot buy it either, so the overlay never sends an unlock for it.
+        Wrapped(C::muted, Format1(T("%s. За байты не изучается.", "%s. It cannot be bought for bytes."), UnlockText(selected)));
+    } else if (status != Status::Researched) {
         const Pending& pending = ui.unlockPending;
         const bool busy = pending.Active();
         ImGui::BeginDisabled(!(live.connected && live.allowUnlock && status == Status::Affordable && !busy));
-        if (PrimaryButton(Upper("Изучить за " + FormatInt(selected.cost) + " Б"), {-FLT_MIN, 44})) SendUnlock(ui, selected);
+        if (PrimaryButton(Upper(Format1(T("Изучить за %s", "Research for %s"), Bytes(selected.cost))), {-FLT_MIN, 44})) SendUnlock(ui, selected);
         ImGui::EndDisabled();
         if (busy && pending.itemId == selected.id) {
-            Wrapped(C::muted, "Команда отправлена в игру, жду подтверждения…");
+            Wrapped(C::muted, T("Команда отправлена в игру, жду подтверждения…", "Sent to the game, waiting for confirmation…"));
         } else if (busy) {
             const Item* other = FindItem(pending.itemId);
-            Wrapped(C::muted, "Ждём подтверждения изучения «" + (other ? other->nameRu : pending.itemId) + "»…");
+            const std::string otherName = other ? NameOf(*other) : pending.itemId;
+            Wrapped(C::muted, Format1(T("Ждём подтверждения изучения «%s»…", "Waiting for the game to confirm \"%s\"…"), otherName));
         } else if (!live.connected) {
-            Wrapped(C::warn, "Нет связи с Lua-модом Byteboard.");
+            Wrapped(C::warn, T("Нет связи с Lua-модом Byteboard.", "No connection to the Byteboard Lua mod."));
         } else if (!live.allowUnlock) {
-            Wrapped(C::muted, "Изучение выключено: отметьте «Изучение разрешено» вверху.");
+            Wrapped(C::muted, T("Изучение выключено: отметьте «Изучение разрешено» вверху.", "Research is off: tick \"Research allowed\" at the top."));
         } else if (status == Status::TooExpensive) {
-            Wrapped(C::warn, "Не хватает " + FormatInt(selected.cost - (long long)live.balance) + " Б.");
+            Wrapped(C::warn, Format1(T("Не хватает %s.", "%s short."), Bytes(selected.cost - (long long)live.balance)));
         }
     }
     const ItemMessage& message = ui.unlockMessage;
@@ -260,10 +271,12 @@ void DrawResearchButton(UiState& ui, const Item& selected, Status status, const 
 void DrawDetail(UiState& ui, const Live& live) {
     const Item* selected = FindItem(ui.selectedId);
     if (!selected) {
-        Caps("Карточка", 16, C::accent);
-        Wrapped(C::muted, "Выберите предмет, чтобы увидеть описание, рецепт и тот же предмет у других принтеров.");
+        Caps(T("Карточка", "Item"), 16, C::accent);
+        Wrapped(C::muted, T("Выберите предмет, чтобы увидеть описание, рецепт и тот же предмет у других принтеров.",
+                            "Select an item to see its description, recipe and the same item at other printers."));
         ImGui::Spacing();
-        Wrapped(C::muted, "Поиск ищет и по ресурсам: «кварц» покажет всё, что из него печатается.");
+        Wrapped(C::muted, T("Поиск ищет и по ресурсам: «кварц» покажет всё, что из него печатается.",
+                            "Search also finds resources: \"quartz\" shows everything printed from it."));
         return;
     }
     const Status status = StatusOf(*selected, live);
@@ -274,25 +287,33 @@ void DrawDetail(UiState& ui, const Live& live) {
     ImGui::SetCursorScreenPos(p + ImVec2(98, 4));
     ImGui::PushTextWrapPos(0);
     ImGui::PushFont(DisplayFont(), 22);
-    ImGui::TextColored(Vec(C::accent), "%s", Upper(selected->nameRu).c_str());
+    ImGui::TextColored(Vec(C::accent), "%s", Upper(NameOf(*selected)).c_str());
     ImGui::PopFont();
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 98);
-    ImGui::TextColored(Vec(C::muted), "%s", selected->nameEn.c_str());
+    // The Russian interface also shows the English name, the one players often know from guides.
+    if (UiLang() == Lang::Ru && !selected->nameEn.empty()) {
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 98);
+        ImGui::TextColored(Vec(C::muted), "%s", selected->nameEn.c_str());
+    }
     ImGui::PopTextWrapPos();
     ImGui::SetCursorScreenPos({p.x, std::max(ImGui::GetCursorScreenPos().y, p.y + 84) + 12});
 
-    KeyValue("Цена", CostText(*selected, status), status == Status::Affordable ? C::accent : C::fg);
-    KeyValue("Печать", Printers()[selected->printerIndex].label);
-    KeyValue("Группа", Groups()[selected->groupIndex].label + " › " + selected->subgroup);
+    if (selected->unlock == Unlock::Research) {
+        KeyValue(T("Цена", "Cost"), CostText(*selected, status), status == Status::Affordable ? C::accent : C::fg);
+    } else {
+        KeyValue(T("Откуда", "Source"), UnlockText(*selected));
+    }
+    KeyValue(T("Печать", "Printer"), LabelOf(Printers()[selected->printerIndex]));
+    if (!selected->dlc.empty()) KeyValue("DLC", selected->dlc);
+    KeyValue(T("Группа", "Group"), LabelOf(Groups()[selected->groupIndex]) + " › " + SubgroupOf(*selected));
     if (!selected->ingredients.empty()) {
         ImGui::Spacing();
-        Caps("Рецепт", 14, C::accent);
+        Caps(T("Рецепт", "Recipe"), 14, C::accent);
         DrawRecipeChips(ui, *selected);
     }
-    if (!selected->description.empty()) {
+    if (!DescriptionOf(*selected).empty()) {
         ImGui::Spacing();
-        Caps("Описание", 14, C::accent);
-        Wrapped(C::fg, selected->description);
+        Caps(T("Описание", "Description"), 14, C::accent);
+        Wrapped(C::fg, DescriptionOf(*selected));
     }
     DrawKin(ui, *selected, live);
     ImGui::Spacing();
@@ -309,9 +330,9 @@ void DrawCatalogWindow(UiState& ui, const Live& live) {
     ImGui::SetNextWindowSize({std::floor(io.DisplaySize.x * 0.5f), io.DisplaySize.y}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSizeConstraints(kCatalogMinSize, {FLT_MAX, FLT_MAX});
     ImGui::Begin("Byteboard", nullptr, kWindowFlags);
-    if (DrawHeader("Byteboard", "каталог исследований · F8 — закрыть", live, true)) ui.view.OnCloseButton();
+    if (DrawHeader("Byteboard", T("каталог исследований", "research catalog"), live, true)) ui.view.OnCloseButton();
     ImGui::SetCursorPos({kPad, kHeaderH + 16});
-    SearchBox("##q", "Название, ресурс или назначение: «батарея», «литий», «rover»…", ui.filter.search, sizeof ui.filter.search);
+    SearchBox("##q", T("Название, ресурс или назначение: «батарея», «литий», «rover»…", "Name, resource or purpose: \"battery\", \"lithium\", \"rover\"…"), ui.filter.search, sizeof ui.filter.search);
     DrawFilters(ui.filter, view);
 
     const float ww = ImGui::GetWindowWidth();

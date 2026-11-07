@@ -59,6 +59,8 @@ set(OVERLAY_SOURCES
     src/hooks.h
     src/json.cpp
     src/json.h
+    src/lang.cpp
+    src/lang.h
     src/paths.cpp
     src/paths.h
     src/render.cpp

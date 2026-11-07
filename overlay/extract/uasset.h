@@ -1,7 +1,7 @@
 #pragma once
-// Parses a cooked, unversioned UE 4.27 package (tools/lib/uasset.mjs): the .uasset header (package
+// Parses a cooked, unversioned UE 4.27 package: the .uasset header (package
 // summary, name, import and export tables) and the tagged properties of every export, which a cooked
-// split package keeps in the .uexp. Property values follow uasset.mjs exactly:
+// split package keeps in the .uexp. Property values:
 //   Int, Float (rounded to 3 decimals), Bool, Name and Str properties: plain values
 //   Object and Class properties: "@" + full object path, e.g. "@/Game/Items/ItemTypes/Minables/Zinc.Zinc_C";
 //     null for a null reference
@@ -58,7 +58,7 @@ void SkipObjectGuid(Reader& reader);
 // other value, or an empty path (which every caller treats like null).
 std::optional<std::string> RefPath(const Value* value);
 
-// Game object paths (tools/lib/paths.mjs). The package "/Game/X/Y" is the file "Astro/Content/X/Y.uasset"
+// Game object paths. The package "/Game/X/Y" is the file "Astro/Content/X/Y.uasset"
 // (+ ".uexp") in the pak.
 std::string PackageToPakPath(std::string_view packagePath);  // throws std::runtime_error outside /Game/
 std::string PakPathToPackage(std::string_view pakPath);      // throws std::runtime_error outside Astro/Content/

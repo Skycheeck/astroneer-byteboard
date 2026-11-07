@@ -11,6 +11,7 @@
 
 #include "bridge.h"
 #include "hooks.h"
+#include "lang.h"
 #include "imgui.h"
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
@@ -30,7 +31,6 @@ namespace {
 
 using Microsoft::WRL::ComPtr;
 
-constexpr int kToggleKey = VK_F8;
 constexpr int kMouseButtons = 3;  // left, right, middle
 
 // The device and context are kept for the life of the process and never released: the DLL is
@@ -42,7 +42,6 @@ IDXGISwapChain* g_gameSwapChain = nullptr;  // compared by address only, re-chec
 bool g_imguiReady = false;
 bool g_initFailed = false;
 bool g_reportedWndProc = false;
-bool g_toggleKeyWasDown = false;
 bool g_drewLastFrame = false;
 bool g_wasForeground = false;
 bool g_buttonDown[kMouseButtons] = {};
@@ -284,9 +283,6 @@ void OverlayFrame(IDXGISwapChain* sc) {
     }
 
     UiState& ui = Ui();
-    const bool toggleDown = (GetAsyncKeyState(kToggleKey) & 0x8000) != 0;
-    if (toggleDown && !g_toggleKeyWasDown && GetForegroundWindow() == g_hwnd) ui.view.OnToggleKey();
-    g_toggleKeyWasDown = toggleDown;
     if (TakeEscapeRequest()) ui.view.OnEscape();
     ApplyRequests(ui, TakeRequests());
     PublishViewState(ui.view);
@@ -319,6 +315,7 @@ void OverlayFrame(IDXGISwapChain* sc) {
     }
     PublishWants(io.WantCaptureMouse, io.WantTextInput);
     const std::shared_ptr<const Live> live = SnapshotLive();
+    SetFrameLanguage(live->language, DataLocales());
     ResolvePending(ui, *live);
     if (ui.view.GetMode() == Mode::Printer) DrawPrinterWindow(ui, *live);
     else DrawCatalogWindow(ui, *live);

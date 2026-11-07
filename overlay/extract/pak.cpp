@@ -49,7 +49,7 @@ public:
     Inflater& operator=(const Inflater&) = delete;
 
     // Returns the number of bytes written. The stream must end within the input; bytes after its end
-    // are ignored, as Node's zlib.inflateSync does.
+    // are ignored.
     size_t Inflate(ByteView input, uint8_t* out, size_t capacity, const std::string& path) {
         inflateReset(&stream_);
         stream_.next_in = const_cast<Bytef*>(input.data());

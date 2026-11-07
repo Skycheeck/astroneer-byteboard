@@ -67,10 +67,32 @@ std::wstring Lower(std::wstring w) {
     return w;
 }
 
+namespace {
+std::wstring g_upperLocale;  // render thread
+}  // namespace
+
+void SetUpperLocale(const std::string& locale) {
+    g_upperLocale = Widen(locale);
+}
+
 std::string Upper(const std::string& s) {
     std::wstring w = Widen(s);
-    if (!w.empty()) CharUpperBuffW(w.data(), (DWORD)w.size());
-    return Narrow(w);
+    if (w.empty()) return s;
+    const wchar_t* locale = g_upperLocale.empty() ? LOCALE_NAME_INVARIANT : g_upperLocale.c_str();
+    const DWORD flags = LCMAP_UPPERCASE | (g_upperLocale.empty() ? 0 : LCMAP_LINGUISTIC_CASING);
+    const int n = LCMapStringEx(locale, flags, w.c_str(), (int)w.size(), nullptr, 0, nullptr, nullptr, 0);
+    std::wstring upper;
+    if (n > 0) {
+        upper.resize(n);
+        if (LCMapStringEx(locale, flags, w.c_str(), (int)w.size(), upper.data(), n, nullptr, nullptr, 0) != n) upper.clear();
+    }
+    if (upper.empty()) {  // an unknown locale name: language-neutral casing
+        upper = w;
+        CharUpperBuffW(upper.data(), (DWORD)upper.size());
+    }
+    // ß has no capital in common use; capitals spell it SS.
+    for (size_t at = upper.find(L'\u00DF'); at != std::wstring::npos; at = upper.find(L'\u00DF', at + 2)) upper.replace(at, 1, L"SS");
+    return Narrow(upper);
 }
 
 std::string AsciiLower(std::string s) {

@@ -23,10 +23,19 @@ game. Names are reflection names; all native classes live under `/Script/Astro`.
 
 ## Item types
 
-- Every catalog item is a Blueprint class under `/Game/Items/ItemTypes/` whose class default object carries
-  `CatalogData` (`ItemCatalogData`): `Category` (`ItemCategory_Backpack`, `_SmFab`, `_MedFab`, `_LgFab`, ...),
-  `UnlockCost`, `bIsCreativeModeOnly`, `BaseItemType` and variant fields. Fields equal to the parent's are
-  not serialised.
+- Every catalog item is a Blueprint item type class whose class default object carries `CatalogData`
+  (`ItemCatalogData`): `Category` (`ItemCategory_Backpack`, `_SmFab`, `_MedFab`, `_LgFab`, ...),
+  `UnlockCost`, `bIsCreativeModeOnly`, `bHiddenUntilUnlocked`, `bPlayFabAccountBound`, `BaseItemType` and
+  variant fields. Fields equal to the parent's are not serialised. Most item types are under
+  `/Game/Items/ItemTypes/`, but not all: rails (`/Game/Vehicles/Rails`), the VTOL, the hoverboard and the
+  expansion items (`/Game/U32_Expansion` = Glitchwalkers, `/Game/U36_Expansion`) live elsewhere, so the
+  extraction finds item types by their `ItemCatalogData` export anywhere in the pak.
+- `bHiddenUntilUnlocked` items are not for sale: the game's catalog hides them until something unlocks
+  them, usually a mission. Their `UnlockCost` is often 0 or a placeholder (1 000 000). `bPlayFabAccountBound`
+  marks account-bound event rewards (cosmetic shelters). The mod refuses `unlock` for hidden items.
+- Missions are `AstroMissionDataAsset` packages (`/Game/Missions/*`, `/Game/U32_Expansion/MissionU32_Expansion`,
+  ...). Each `MissionsData[]` entry has `MissionId`, `Title` (string table text) and `ResearchRewards`, the item
+  type classes the mission unlocks. Normal research items appear there too (a mission can also grant them).
 - `UnlockCost` is left out of the asset when it equals the native default, **1000**. That value never appears
   explicitly, and the community wiki lists 1000 for items such as the Tapper.
 - `PickupActor` is the world actor class an item prints as. Printers report their current recipe by this
@@ -59,6 +68,14 @@ A step lands a few frames after the call, so the mod waits for the position to c
   and an `ItemCategory_` printer category.
 - `BackpackRail_C.IsRaised` is true while the backpack (Q) is open.
 - `BackpackCatalog_C.ExtendTop` is false while the backpack research catalog is open.
+
+## Language
+
+- `/Script/Engine.Default__KismetInternationalizationLibrary:GetCurrentLanguage()` returns the game's
+  display language (`ru`, `en`, `de`, `es-ES`, `pt-BR`, ...); the mod reads it every 10 s.
+- The pak ships `Localization/Game/<locale>/Game.locres` for de, en, es, es-ES, fr, it, ja, ko, nl, pl, pt-BR, ru,
+  tr and zh-Hans (1.42.3). A `.locres` leaves out every text that equals the English source; the game then
+  shows the English text.
 
 ## Crash lessons
 

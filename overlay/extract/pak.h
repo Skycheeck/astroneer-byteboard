@@ -1,6 +1,6 @@
 #pragma once
 // Reads files out of an Unreal Engine 4.27 pak archive (pak version 11) through its full directory
-// index (tools/lib/pak.mjs). Paths are relative to the mount point, for example
+// index. Paths are relative to the mount point, for example
 // "Astro/Content/Items/ItemTypes/Components/Generator_Small.uasset".
 // Supported: an unencrypted index, uncompressed and Zlib-compressed entries, no entry encryption. This
 // is what ASTRONEER ships; anything else is refused with a FormatError instead of being misread.
@@ -25,6 +25,7 @@ public:
 
     // Every file, in the order of the directory index.
     const std::vector<std::string>& Files() const { return files_; }
+    bool Contains(const std::string& path) const { return fileIndex_.contains(path); }
 
     // The file's contents. Throws FormatError when it is missing or its entry is malformed, and
     // std::runtime_error when its zlib data is corrupt or the pak cannot be read.

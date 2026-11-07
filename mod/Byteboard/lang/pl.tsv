@@ -1,0 +1,139 @@
+# Byteboard interface translation: Polish (pl).
+# One line per text: the English text, a tab, the translation. Keep %s and %d exactly; lines starting with # are comments.
+Purpose	Zastosowanie
+All	Wszystkie
+Printed at	Gdzie drukować
+Status	Status
+%s left	zostało %s
+Nothing found. Try another word or clear a filter.	Nic nie znaleziono. Spróbuj innego słowa lub usuń filtr.
+%s: all printers	%s: wszystkie drukarki
+%s. It cannot be bought for bytes.	%s. Nie można tego zbadać za bajty.
+Research for %s	Zbadaj za %s
+Sent to the game, waiting for confirmation…	Wysłano do gry, czekam na potwierdzenie…
+Waiting for the game to confirm "%s"…	Czekam, aż gra potwierdzi „%s”…
+No connection to the Byteboard Lua mod.	Brak połączenia z modem Lua Byteboard.
+Research is off: tick "Research allowed" at the top.	Badania są wyłączone: zaznacz u góry „Badania dozwolone”.
+%s short.	Brakuje %s.
+Item	Przedmiot
+Select an item to see its description, recipe and the same item at other printers.	Wybierz przedmiot, aby zobaczyć jego opis, przepis i ten sam przedmiot w innych drukarkach.
+Search also finds resources: "quartz" shows everything printed from it.	Wyszukiwarka znajduje też zasoby: „kwarc” pokaże wszystko, co się z niego drukuje.
+Cost	Koszt
+Source	Źródło
+Printer	Drukarka
+Group	Grupa
+Recipe	Przepis
+Description	Opis
+research catalog	katalog badawczy
+Name, resource or purpose: "battery", "lithium", "rover"…	Nazwa, zasób lub zastosowanie: „bateria”, „lit”, „łazik”…
+Affordable	Stać cię
+Too expensive	Za drogie
+Rewards	Nagrody
+Researched	Zbadane
+Open in the catalog	Otwórz w katalogu
+selecting on the printer…	wybieram na drukarce…
+on the printer · %s	na drukarce · %s
+selecting…	wybieram…
+Not enough resources or power	Za mało zasobów lub energii
+The printer's recipe is not recognised	Nie rozpoznano przepisu na drukarce
+No connection to the mod	Brak połączenia z modem
+PRINT	DRUKUJ
+Ready to print	Gotowe do druku
+Not researched	Niezbadane
+Nothing found.	Nic nie znaleziono.
+Search by name or resource…	Szukaj po nazwie lub zasobie…
+This printer is not recognised (%s).	Nie rozpoznano tej drukarki (%s).
+Game error: %s	Błąd gry: %s
+Failed: %s	Nie udało się: %s
+The previous command has not been handled yet.	Poprzednie polecenie nie zostało jeszcze obsłużone.
+Could not write the command.	Nie udało się zapisać polecenia.
+Researched in the game.	Zbadano w grze.
+The game did not confirm the research within %s.	Gra nie potwierdziła badania w ciągu %s.
+The mod did not answer within %s.	Mod nie odpowiedział w ciągu %s.
+Printing started	Rozpoczęto drukowanie
+The mod did not answer	Mod nie odpowiedział
+The mod did not understand the command.	Mod nie zrozumiał polecenia.
+The mod does not know this command.	Mod nie zna tego polecenia.
+The command expired: the mod got it too late.	Polecenie wygasło: mod otrzymał je za późno.
+No world is loaded yet.	Nie wczytano jeszcze świata.
+This item exists only in Creative Mode.	Ten przedmiot istnieje tylko w trybie twórczym.
+A mission or an event unlocks this item, not bytes.	Ten przedmiot odblokowuje misja lub wydarzenie, a nie bajty.
+Already researched in the game.	Już zbadane w grze.
+The game has not loaded this item yet.	Gra jeszcze nie wczytała tego przedmiotu.
+No printer is open.	Żadna drukarka nie jest otwarta.
+The printer is still switching recipes.	Drukarka wciąż zmienia przepis.
+This printer does not have this recipe.	Ta drukarka nie ma tego przepisu.
+The printer was closed while the recipe was being selected.	Drukarkę zamknięto podczas wybierania przepisu.
+Another printer was opened while the recipe was being selected.	Podczas wybierania przepisu otwarto inną drukarkę.
+Another recipe was selected.	Wybrano inny przepis.
+The recipe was not found in time.	Nie znaleziono przepisu na czas.
+The printer stopped responding.	Drukarka przestała odpowiadać.
+The printer shows a different recipe.	Drukarka pokazuje inny przepis.
+Not enough resources or power.	Za mało zasobów lub energii.
+Clear	Wyczyść
+BYTES	BAJTY
+game connected	gra połączona
+no connection to the mod	brak połączenia z modem
+Research allowed	Badania dozwolone
+researched	zbadane
+mission	misja
+event	wydarzenie
+special	specjalne
+Mission reward	Nagroda za misję
+Reward of the mission "%s"	Nagroda za misję „%s”
+Event reward, bound to the account	Nagroda z wydarzenia, przypisana do konta
+Unlocked in the game in a special way	Odblokowywany w grze w szczególny sposób
+Other	Inne
+Other printer	Inna drukarka
+other	inna
+Power	Energia
+Oxygen	Tlen
+Production	Produkcja
+Storage	Przechowywanie
+Platforms & Base	Platformy i baza
+Automation	Automatyka
+Transport	Transport
+Terraforming	Terraformowanie
+Exploration & Gear	Eksploracja i sprzęt
+Leisure & Decor	Rozrywka i wystrój
+Backpack	Plecak
+backpack	plecak
+Small Printer	Mała drukarka
+small	mała
+Medium Printer	Średnia drukarka
+medium	średnia
+Large Printer	Duża drukarka
+large	duża
+Terrain Tool Mods	Mody terraformatora
+Mechanisms	Mechanizmy
+Printers	Drukarki
+Solar Panels	Panele słoneczne
+Print Filters	Filtry drukarki
+Tethers	Przewody
+Scanners & Beacons	Skanery i nadajniki
+Batteries	Baterie
+Canisters	Kanistry
+Generators	Generatory
+Lights	Światła
+Explosives	Ładunki wybuchowe
+Wind Turbines	Turbiny wiatrowe
+Movement	Poruszanie się
+Trade & Packaging	Handel i pakowanie
+Shelters	Schronienia
+Platforms	Platformy
+Shuttles	Promy
+Sensor Rings	Czujniki pierścieniowe
+Landing Pads	Lądowiska
+Vehicles	Pojazdy
+Railway	Kolej
+Shredders	Rozdrabniarki
+Processing	Przetwarzanie
+Aircraft	Statki powietrzne
+Research	Badania
+Vehicle Attachments	Akcesoria pojazdów
+Sensors & Logic	Czujniki i logika
+Wiring	Okablowanie
+Key Items	Przedmioty kluczowe
+Vehicle Drills	Świdry do pojazdów
+Thrusters	Silniki manewrowe
+Walkways	Chodniki
+Megastructures	Megastruktury

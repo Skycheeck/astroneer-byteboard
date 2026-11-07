@@ -1,6 +1,5 @@
 #pragma once
-// Icon pixels from the game's textures (tools/lib/texture.mjs and tools/lib/dxt.mjs, used by
-// tools/steps/build-icons.mjs).
+// Icon pixels from the game's textures.
 #include <string>
 
 #include "pak.h"

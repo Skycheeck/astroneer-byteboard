@@ -160,10 +160,39 @@ local function readPrinter(s)
     end
 end
 
+-- The game's display language ("ru", "en", "de", ...), from the static
+-- KismetInternationalizationLibrary:GetCurrentLanguage, as the game's language setting sets it. It
+-- rarely changes, so it is read again only every LANGUAGE_PERIOD_SECONDS. nil when unreadable.
+local LANGUAGE_PERIOD_SECONDS = 10
+local language = { value = nil, readAt = nil }
+
+local function currentLanguage(now)
+    if language.readAt and now - language.readAt < LANGUAGE_PERIOD_SECONDS then
+        return language.value
+    end
+    language.readAt = now
+    local library = uobj.findValid("/Script/Engine.Default__KismetInternationalizationLibrary")
+    if not library then
+        return language.value
+    end
+    local ok, value = pcall(function()
+        local result = library:GetCurrentLanguage()
+        if type(result) == "string" then
+            return result
+        end
+        return result:ToString()
+    end)
+    if ok and type(value) == "string" and value ~= "" then
+        language.value = value
+    end
+    return language.value
+end
+
 -- Returns the state object and whether a world is loaded (game state and local player controller
 -- found), which can be true while ok is false.
 function M.read()
     local s = { t = os.time(), ok = false }
+    s.language = currentLanguage(s.t)
     readPrinter(s)
     local gameState = uobj.gameState()
     local controller = uobj.localPlayerController()

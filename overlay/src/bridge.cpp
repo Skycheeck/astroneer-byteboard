@@ -40,6 +40,7 @@ void KeepStateOf(const Live& previous, Live& next) {
     next.printerCurrent = previous.printerCurrent;
     next.printerHave = previous.printerHave;
     next.printerCanPrint = previous.printerCanPrint;
+    next.language = previous.language;
 }
 
 // "3,1,?" -> {3, 1, unknown}
@@ -85,6 +86,7 @@ void ReadState(const Live& previous, Live& next) {
     next.printerCurrent = ClassKey(state["printerCurrent"].AsString());
     next.printerHave = ParseCounts(state["printerHave"].AsString());
     next.printerCanPrint = state["printerCanPrint"].AsBool(true);
+    next.language = state["language"].AsString();
 }
 
 void ReadResults(const Live& previous, Live& next) {

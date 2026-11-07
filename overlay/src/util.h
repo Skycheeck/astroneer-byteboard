@@ -17,7 +17,11 @@ std::string Narrow(std::wstring_view wide);
 std::string Utf8(const fs::path& path);
 // Lower case for search, with ё folded into е.
 std::wstring Lower(std::wstring text);
+// Upper case for labels, with the casing rules of the locale SetUpperLocale named (Turkish i -> İ);
+// ß becomes SS. Render thread only.
 std::string Upper(const std::string& utf8);
+// A locale name ("tr", "de"), or empty for language-neutral casing.
+void SetUpperLocale(const std::string& locale);
 std::string AsciiLower(std::string text);
 std::string_view Trim(std::string_view text);
 std::vector<std::string_view> Split(std::string_view text, char separator);

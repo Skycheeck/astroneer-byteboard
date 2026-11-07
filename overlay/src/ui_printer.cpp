@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "ui_widgets.h"
+#include "lang.h"
 #include "ui_windows.h"
 #include "util.h"
 
@@ -37,7 +38,7 @@ void PrinterRow(UiState& ui, const Item& it, Status status, float w, const Live&
     ImGui::SameLine(0, 0);
     const bool toCatalog = ImGui::InvisibleButton("cat", {kArrowW, kRowH});
     const bool arrowHovered = ImGui::IsItemHovered();
-    if (arrowHovered) ImGui::SetTooltip("Открыть в каталоге");
+    if (arrowHovered) ImGui::SetTooltip("%s", T("Открыть в каталоге", "Open in the catalog"));
     const bool researched = status == Status::Researched;
     const bool current = researched && IsCurrentRecipe(it, live);
     dl->AddRectFilled(p, p + size, Col(current ? C::accentSoft : researched ? C::panel : C::panelAlt), 3);
@@ -63,15 +64,16 @@ void PrinterRow(UiState& ui, const Item& it, Status status, float w, const Live&
     const float textX = tp.x + tile + 12;
     const float textW = std::max(40.0f, right - textX);
     dl->PushClipRect(p, {right, p.y + kRowH}, true);
-    dl->AddText(BoldFont(), 16, {textX, p.y + 11}, Col(researched ? C::fg : C::muted), it.nameRu.c_str());
+    dl->AddText(BoldFont(), 16, {textX, p.y + 11}, Col(researched ? C::fg : C::muted), NameOf(it).c_str());
     // The second line: what is happening with this row, otherwise its recipe.
-    std::string sub = it.recipe.empty() ? it.subgroup : it.recipe;
+    const std::string& recipe = RecipeOf(it);
+    std::string sub = recipe.empty() ? SubgroupOf(it) : recipe;
     uint32_t subColor = C::muted;
     if (ui.selectPending.Active() && ui.selectPending.itemId == it.id) {
-        sub = "выбираю на принтере…";
+        sub = T("выбираю на принтере…", "selecting on the printer…");
         subColor = C::accent;
     } else if (current) {
-        sub = "выбрано на принтере · " + sub;
+        sub = Format1(T("выбрано на принтере · %s", "on the printer · %s"), sub);
         subColor = C::accent;
     } else if (ui.selectMessage.IsFor(it.id)) {
         sub = ui.selectMessage.text;
@@ -88,8 +90,9 @@ void PrinterRow(UiState& ui, const Item& it, Status status, float w, const Live&
 // count is unknown. Pills that do not fit before maxX are left out.
 void DrawIngredientPills(ImDrawList* dl, ImVec2 p, const Item& item, const Live& live, float maxX) {
     float x = kStripNameX;
-    for (size_t k = 0; k < item.ingredients.size(); ++k) {
-        const Ingredient& ingredient = item.ingredients[k];
+    const std::vector<Ingredient>& ingredients = IngredientsOf(item);
+    for (size_t k = 0; k < ingredients.size(); ++k) {
+        const Ingredient& ingredient = ingredients[k];
         std::string label = IngredientLabel(ingredient);
         uint32_t fg = C::muted;
         uint32_t bg = C::accentSoft;
@@ -113,14 +116,14 @@ void DrawIngredientPills(ImDrawList* dl, ImVec2 p, const Item& item, const Live&
 bool StripMessage(const UiState& ui, const Item* currentItem, const Live& live, std::string& text, bool& ok) {
     const ItemMessage& printed = ui.printMessage;
     if (ui.selectPending.Active()) {
-        text = "выбираю…";
+        text = T("выбираю…", "selecting…");
         ok = true;
     } else if (currentItem && printed.IsFor(currentItem->id) &&
                std::chrono::duration<double>(Clock::now() - printed.at).count() < kPrintMessageSec) {
         text = printed.text;
         ok = printed.ok;
     } else if (currentItem && !live.printerCanPrint) {
-        text = "Не хватает ресурсов или энергии";
+        text = T("Не хватает ресурсов или энергии", "Not enough resources or power");
         ok = false;
     } else {
         return false;
@@ -151,12 +154,12 @@ void DrawPrintStrip(UiState& ui, int printerIndex, const Live& live) {
         // The name and the message share the first line; a long name gives way down to a minimum.
         float nameMaxW = messageRight - kStripNameX;
         if (hasMessage) nameMaxW = std::max(kStripMinNameW, nameMaxW - kStripGap - TextWidth(BodyFont(), 14, message));
-        const std::string name = FitText(BoldFont(), 16, currentItem->nameRu, nameMaxW);
+        const std::string name = FitText(BoldFont(), 16, NameOf(*currentItem), nameMaxW);
         dl->AddText(BoldFont(), 16, p + ImVec2(kStripNameX, 8), Col(C::fg), name.c_str());
         textRight = kStripNameX + TextWidth(BoldFont(), 16, name);
         DrawIngredientPills(dl, p, *currentItem, live, stripW - buttonW - 10);
     } else {
-        const char* text = live.connected ? "Рецепт на принтере не распознан" : "Нет связи с модом";
+        const char* text = live.connected ? T("Рецепт на принтере не распознан", "The printer's recipe is not recognised") : T("Нет связи с модом", "No connection to the mod");
         dl->AddText(BodyFont(), 15, p + ImVec2(14, 22), Col(C::muted), text);
         textRight = 14 + TextWidth(BodyFont(), 15, text);
     }
@@ -171,7 +174,7 @@ void DrawPrintStrip(UiState& ui, int printerIndex, const Live& live) {
     // Also disabled while a select steps through the printer's recipes: printing then would start
     // whichever recipe the scan is passing.
     ImGui::BeginDisabled(!currentItem || ui.printPending.Active() || ui.selectPending.Active());
-    if (PrimaryButton("ПЕЧАТАТЬ", {buttonW, kStripH}) && currentItem) SendPrint(ui, *currentItem);
+    if (PrimaryButton(T("ПЕЧАТАТЬ", "PRINT"), {buttonW, kStripH}) && currentItem) SendPrint(ui, *currentItem);
     ImGui::EndDisabled();
 }
 
@@ -191,11 +194,11 @@ void DrawPrinterList(UiState& ui, int printerIndex, const Live& live) {
         const Status status = StatusOf(it, live);
         (status == Status::Researched ? ready : locked).push_back({&it, status});
     }
-    std::sort(ready.begin(), ready.end(), [](const Row& a, const Row& b) { return a.item->nameRu < b.item->nameRu; });
-    std::stable_sort(locked.begin(), locked.end(), [](const Row& a, const Row& b) {
-        const bool affordableA = a.status == Status::Affordable;
-        const bool affordableB = b.status == Status::Affordable;
-        return affordableA != affordableB ? affordableA : a.item->cost < b.item->cost;
+    std::sort(ready.begin(), ready.end(), [](const Row& a, const Row& b) { return NameOf(*a.item) < NameOf(*b.item); });
+    // Affordable first, then too expensive, then rewards (not for sale); cheapest first within each.
+    const auto rank = [](Status status) { return status == Status::Affordable ? 0 : status == Status::TooExpensive ? 1 : 2; };
+    std::stable_sort(locked.begin(), locked.end(), [&](const Row& a, const Row& b) {
+        return rank(a.status) != rank(b.status) ? rank(a.status) < rank(b.status) : a.item->cost < b.item->cost;
     });
     const float avail = ImGui::GetContentRegionAvail().x - 4;
     const int cols = std::max(1, (int)((avail + kGap) / (kRowMinW + kGap)));
@@ -210,7 +213,7 @@ void DrawPrinterList(UiState& ui, int printerIndex, const Live& live) {
             int n = 0;
             for (const Row& row : rows) {
                 if (row.item->groupIndex != g) continue;
-                if (n == 0) Caps(Groups()[g].label.c_str(), 14, C::muted);
+                if (n == 0) Caps(LabelOf(Groups()[g]).c_str(), 14, C::muted);
                 if (n++ % cols) ImGui::SameLine(0, kGap);
                 PrinterRow(ui, *row.item, row.status, rowW, live);
             }
@@ -218,9 +221,9 @@ void DrawPrinterList(UiState& ui, int printerIndex, const Live& live) {
         }
         ImGui::Dummy({0, 10});
     };
-    section("Можно печатать", ready);
-    section("Не изучено", locked);
-    if (ready.empty() && locked.empty()) ImGui::TextColored(Vec(C::muted), "Ничего не нашлось.");
+    section(T("Можно печатать", "Ready to print"), ready);
+    section(T("Не изучено", "Not researched"), locked);
+    if (ready.empty() && locked.empty()) ImGui::TextColored(Vec(C::muted), "%s", T("Ничего не нашлось.", "Nothing found."));
 }
 
 }  // namespace
@@ -237,17 +240,17 @@ void DrawPrinterWindow(UiState& ui, const Live& live) {
     ImGui::SetNextWindowSize({w, io.DisplaySize.y}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSizeConstraints(kPrinterMinSize, {FLT_MAX, FLT_MAX});
     ImGui::Begin(backpack ? "Byteboard · Backpack" : "Byteboard · Printer", nullptr, kWindowFlags);
-    const std::string title = printerIndex >= 0 ? Printers()[printerIndex].label : "Принтер";
+    const std::string title = printerIndex >= 0 ? LabelOf(Printers()[printerIndex]) : std::string(T("Принтер", "Printer"));
     if (DrawHeader(title, nullptr, live, false)) ui.view.OnCloseButton();
     ImGui::SetCursorPos({kPad, kHeaderH + 14});
     DrawPrintStrip(ui, printerIndex, live);
     ImGui::SetCursorPos({kPad, ImGui::GetCursorPosY() + 10});
-    SearchBox("##pq", "Поиск по названию или ресурсу…", ui.printerSearch, sizeof ui.printerSearch);
+    SearchBox("##pq", T("Поиск по названию или ресурсу…", "Search by name or resource…"), ui.printerSearch, sizeof ui.printerSearch);
     ImGui::SetCursorPos({kPad, ImGui::GetCursorPosY() + 8});
     ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(0, 0, 0, 0));
     ImGui::BeginChild("plist", {-kPad, -kPad}, ImGuiChildFlags_None);
     if (printerIndex >= 0) DrawPrinterList(ui, printerIndex, live);
-    else ImGui::TextColored(Vec(C::muted), "Этот принтер не распознан (%s).", category.c_str());
+    else ImGui::TextColored(Vec(C::muted), T("Этот принтер не распознан (%s).", "This printer is not recognised (%s)."), category.c_str());
     ImGui::EndChild();
     ImGui::PopStyleColor();
     ImGui::End();

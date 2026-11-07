@@ -1,7 +1,8 @@
 #pragma once
-// Property values as tools/lib/uasset.mjs produces them for JavaScript, and the JavaScript semantics
-// the catalog rules apply to them (truthiness, String(), Number(), Object.keys order, string order),
-// so the port makes the same decisions as the Node pipeline it replaces.
+// Property values (encoding in uasset.h) and the conversions the catalog rules apply to them. The rules
+// take JavaScript's semantics, which the extractor was first written in and which fit loosely typed
+// data well: a missing property is undefined (nullptr), and truthiness, String() and Number() decide
+// what a value of an unexpected type means.
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -28,9 +29,9 @@ struct Value {
     static Value EmptyArray();
     static Value EmptyObject();
 
-    // The member named key, or nullptr (JavaScript's undefined); only objects have members.
+    // The member named key, or nullptr (undefined); only objects have members.
     const Value* Get(std::string_view key) const;
-    // Adds or replaces a member; a replaced member keeps its place, as in a JavaScript object.
+    // Adds or replaces a member; a replaced member keeps its place.
     void Set(std::string key, Value value);
 };
 
@@ -46,17 +47,12 @@ double ToJsNumber(const Value* value);       // Number(value)
 
 std::string NumberToJsString(double value);  // Number.prototype.toString()
 double StringToJsNumber(std::string_view text);
-// +value.toFixed(3), how uasset.mjs rounds a FloatProperty.
+// +value.toFixed(3): how a FloatProperty is rounded (to 3 decimals, half away from zero).
 double RoundFloat(float value);
-// The integer part modulo 256, as storing a number into a Buffer does.
+// The integer part modulo 256 (0 for NaN and infinities): how a computed channel becomes a byte.
 uint8_t ToUint8(double value);
 
-// String.prototype.trim() on UTF-8 text.
+// String.prototype.trim() on UTF-8 text: Unicode white space and line breaks at both ends.
 std::string_view JsTrim(std::string_view text);
-// a < b as JavaScript compares strings: by UTF-16 code units.
-bool JsStringLess(std::string_view a, std::string_view b);
-// The order Object.keys lists keys inserted in this order: keys that are array indices ("0" to
-// "4294967294") first, ascending, then the others in insertion order. Returns positions into keys.
-std::vector<size_t> JsKeyOrder(const std::vector<std::string>& keys);
 
 }  // namespace rd::extract

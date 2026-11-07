@@ -53,8 +53,10 @@ private:
     Flow flow_;
 };
 
-// "1 500 Б", or "изучено".
+// "1 500 Б", "изучено", or for a reward "за задание" / "за событие" / "особое".
 std::string CostText(const Item& item, Status status);
+// How the item is unlocked, as a sentence: "Награда за задание «…»", "Исследование за 1 000 Б".
+std::string UnlockText(const Item& item);
 
 // Icon colour by status. In the catalog the active items are the ones that can be researched now;
 // in a printer list they are the ones that can be printed (researched).

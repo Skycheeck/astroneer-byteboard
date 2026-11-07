@@ -1,5 +1,5 @@
-# Game data extraction, included from overlay/CMakeLists.txt after the imgui target. It ports
-# `node tools/extract.mjs` for the three files the overlay reads (catalog.tsv, taxonomy.tsv, icons.rgba).
+# Game data extraction, included from overlay/CMakeLists.txt after the imgui target. It reads the
+# game's pak and writes the three files the overlay reads (catalog.tsv, taxonomy.tsv, icons.rgba).
 #   extract_core           static library with rd::extract::ExtractGameData (extract.h), which the
 #                          overlay DLL runs in the game; zlib's inflate sources are compiled into it
 #   byteboard-extract.exe  the same extraction from the command line: byteboard-extract <pak> <outDir>
@@ -31,6 +31,8 @@ add_library(extract_core STATIC
     ${EXTRACT_DIR}/pak.h
     ${EXTRACT_DIR}/reader.cpp
     ${EXTRACT_DIR}/reader.h
+    ${EXTRACT_DIR}/scan.cpp
+    ${EXTRACT_DIR}/scan.h
     ${EXTRACT_DIR}/taxonomy.cpp
     ${EXTRACT_DIR}/taxonomy.h
     ${EXTRACT_DIR}/texts.cpp

@@ -13,41 +13,13 @@ namespace rd::extract {
 
 namespace {
 
-constexpr std::string_view kItemTypesDir = "Astro/Content/Items/ItemTypes/";
-constexpr std::string_view kAssetExtension = ".uasset";
-constexpr size_t kMaxLinesShown = 20;
 // UnlockCost is left out of the asset when it equals the native ItemType default, which is 1000.
 constexpr double kDefaultUnlockCost = 1000;
-
-void LogList(const Logger& log, const std::vector<std::string>& lines) {
-    for (size_t k = 0; k < std::min(lines.size(), kMaxLinesShown); ++k) log("  " + lines[k]);
-    if (lines.size() > kMaxLinesShown) log("  … and " + std::to_string(lines.size() - kMaxLinesShown) + " more");
-}
-
-// The class defaults object's properties, with the ItemCatalogData subobject's properties under CatalogData.
-ItemType ToItemType(const std::string& key, const Asset& asset) {
-    const Export* defaults = nullptr;
-    for (const Export& e : asset.exports) {
-        if (e.name.starts_with("Default__")) {
-            defaults = &e;
-            break;
-        }
-    }
-    if (!defaults && !asset.exports.empty()) defaults = &asset.exports[0];
-    const Export* catalogData = asset.FindByClass("ItemCatalogData");
-    const Export* blueprintClass = asset.FindByClass("BlueprintGeneratedClass");
-    for (const Export* required : {defaults, catalogData}) {
-        if (required && !required->propertiesEnd) throw FormatError("properties of " + required->name + " are unreadable");
-    }
-    if (!defaults) throw FormatError("the package has no exports");
-    ItemType type;
-    type.key = key;
-    type.cls = defaults->classPath;
-    type.sup = blueprintClass ? blueprintClass->superPath : std::nullopt;
-    type.props = defaults->props;
-    if (catalogData) type.props.Set("CatalogData", catalogData->props);
-    return type;
-}
+// Developer test assets that ship in the pak; one even has a printer category.
+constexpr std::string_view kDevelopersDir = "/Game/Developers/";
+// The Glitchwalkers expansion (paid DLC) keeps its content here.
+constexpr std::string_view kGlitchwalkersDir = "/Game/U32_Expansion/";
+constexpr const char* kGlitchwalkers = "Glitchwalkers";
 
 // The effective properties of an item type: its parents' properties overridden by its own, and the
 // same for CatalogData, as the game's class defaults inherit them. A property's effective value is
@@ -56,15 +28,15 @@ class TypeResolver {
 public:
     explicit TypeResolver(const std::vector<ItemType>& types) : types_(types), chains_(types.size()) {
         for (size_t k = 0; k < types.size(); ++k) {
-            if (types[k].cls) keyByClass_[*types[k].cls] = k;  // a later type with the same class wins
+            if (types[k].cls) indexByClass_[*types[k].cls] = k;  // a later type with the same class wins
         }
     }
 
     const ItemType& Get(size_t index) const { return types_[index]; }
 
     std::optional<size_t> IndexOfClass(const std::string& classPath) const {
-        const auto found = keyByClass_.find(classPath);
-        return found == keyByClass_.end() ? std::nullopt : std::optional<size_t>(found->second);
+        const auto found = indexByClass_.find(classPath);
+        return found == indexByClass_.end() ? std::nullopt : std::optional<size_t>(found->second);
     }
 
     const Value* Prop(size_t index, std::string_view name) {
@@ -84,7 +56,7 @@ public:
     }
 
 private:
-    // The type and its parents, nearest first. Throws when the inheritance loops, as resolve() does.
+    // The type and its parents, nearest first. Throws when the inheritance loops.
     const std::vector<size_t>& Chain(size_t index) {
         if (!chains_[index]) {
             std::vector<size_t> chain{index};
@@ -94,7 +66,7 @@ private:
                 const std::optional<size_t> parent = IndexOfClass(*sup);
                 if (!parent) break;
                 if (std::find(chain.begin(), chain.end(), *parent) != chain.end()) {
-                    throw std::runtime_error("class inheritance loops through " + types_[*parent].key);
+                    throw std::runtime_error("class inheritance loops through " + types_[*parent].package);
                 }
                 chain.push_back(*parent);
                 current = *parent;
@@ -105,15 +77,25 @@ private:
     }
 
     const std::vector<ItemType>& types_;
-    std::unordered_map<std::string, size_t> keyByClass_;
+    std::unordered_map<std::string, size_t> indexByClass_;
     std::vector<std::optional<std::vector<size_t>>> chains_;
 };
 
-std::string IdOf(const std::string& key) {
-    return key.substr(key.rfind('/') + 1);  // npos + 1 is 0
+// What the catalog entries are built from.
+struct Sources {
+    TypeResolver& types;
+    Localizer& texts;
+    // Item class path -> the first mission that rewards it.
+    const std::unordered_map<std::string, const Mission*>& rewardedBy;
+    // Recipe ingredients whose item type is not in the pak, for one log line.
+    std::vector<std::string>& unknownIngredients;
+};
+
+std::string IdOf(const std::string& package) {
+    return package.substr(package.rfind('/') + 1);  // npos + 1 is 0
 }
 
-// The printer category reference; a variant without its own category takes its base item's.
+// The category reference; a variant without its own category takes its base item's.
 const Value* CategoryOf(size_t index, TypeResolver& types) {
     std::vector<size_t> visited;
     for (;;) {
@@ -129,84 +111,109 @@ const Value* CategoryOf(size_t index, TypeResolver& types) {
     }
 }
 
-// "@/Game/Items/ItemCategories/ItemCategory_SmFab.ItemCategory_SmFab" -> "SmFab"
-std::string PrinterOf(const Value& category) {
-    const std::optional<std::string> path = RefPath(&category);
-    if (!path) return ToJsString(&category);
-    std::string name = ObjectName(*path);
-    constexpr std::string_view kPrefix = "ItemCategory_";
-    if (name.starts_with(kPrefix)) name.erase(0, kPrefix.size());
-    return name;
-}
-
-std::vector<Ingredient> RecipeOf(size_t index, TypeResolver& types, Localizer& texts) {
-    const Value* recipe = types.Prop(index, "ConstructionRecipe");
+std::vector<Ingredient> RecipeOf(size_t index, Sources& sources) {
+    const Value* recipe = sources.types.Prop(index, "ConstructionRecipe");
     const Value* ingredients = recipe ? recipe->Get("Ingredients") : nullptr;
     if (!Truthy(ingredients)) return {};
-    // Where Node's .map() would throw a TypeError.
     if (ingredients->type != Value::Type::Array) {
-        throw std::runtime_error("the recipe ingredients of " + types.Get(index).key + " are not an array");
+        throw std::runtime_error("the recipe ingredients of " + sources.types.Get(index).package + " are not an array");
     }
     std::vector<Ingredient> result;
     for (const Value& ingredient : ingredients->array) {
         if (ingredient.type == Value::Type::Null) {
-            throw std::runtime_error("a recipe ingredient of " + types.Get(index).key + " is null");
+            throw std::runtime_error("a recipe ingredient of " + sources.types.Get(index).package + " is null");
         }
         const std::optional<std::string> classPath = RefPath(ingredient.Get("ItemType"));
         const std::string item = classPath ? ObjectName(*classPath) : std::string();
-        const std::optional<size_t> itemIndex = classPath ? types.IndexOfClass(*classPath) : std::nullopt;
-        const Value* displayName = itemIndex ? types.Prop(*itemIndex, "Name") : nullptr;
+        const std::optional<size_t> itemIndex = classPath ? sources.types.IndexOfClass(*classPath) : std::nullopt;
+        if (classPath && !itemIndex) sources.unknownIngredients.push_back(*classPath);
+        const Value* displayName = itemIndex ? sources.types.Prop(*itemIndex, "Name") : nullptr;
         const Value* count = ingredient.Get("Count");
         Ingredient entry;
         entry.count = Truthy(count) ? *count : Value::Number(1);
-        const std::optional<std::string> en = texts.Localize(displayName, Language::En);
+        if (displayName) entry.nameText = *displayName;
+        // The ingredient's asset name when it has no display name.
+        const std::optional<std::string> en = sources.texts.Localize(displayName, kEnglish);
         entry.en = en && !en->empty() ? *en : item;
-        const std::optional<std::string> ru = texts.Localize(displayName, Language::Ru);
+        const std::optional<std::string> ru = sources.texts.Localize(displayName, kRussian);
         entry.ru = ru && !ru->empty() ? *ru : item;
         result.push_back(std::move(entry));
     }
     return result;
 }
 
-std::optional<CatalogItem> ToCatalogEntry(size_t index, TypeResolver& types, Localizer& texts) {
+// A mission's title in this language, else in the other one, else its id.
+std::string MissionTitle(const Mission& mission, Localizer& texts, const std::string& locale) {
+    const std::string& other = locale == kRussian ? kEnglish : kRussian;
+    if (std::optional<std::string> title = texts.Translate(&mission.title, locale)) return *title;
+    if (std::optional<std::string> title = texts.Translate(&mission.title, other)) return *title;
+    return mission.id;
+}
+
+std::optional<CatalogItem> ToCatalogEntry(size_t index, Sources& sources) {
+    TypeResolver& types = sources.types;
     const ItemType& type = types.Get(index);
     // Only item types that define their own catalog data are catalog entries; their children are not.
     if (!Truthy(type.props.Get("CatalogData"))) return std::nullopt;
-    const std::string id = IdOf(type.key);
+    const std::string id = IdOf(type.package);
+    if (type.package.starts_with(kDevelopersDir)) return std::nullopt;
     if (Truthy(types.CatalogField(index, "bIsCreativeModeOnly")) || IsCreativeOnly(id)) return std::nullopt;
-    const Value* category = CategoryOf(index, types);
-    if (!category) return std::nullopt;
+    // "@/Game/Items/ItemTypes/CatalogCategories/ItemCategory_SmFab.ItemCategory_SmFab" -> SmFab; other
+    // categories (Exploration, Discovery, the museum's shelves...) are not printed.
+    const std::optional<std::string> categoryPath = RefPath(CategoryOf(index, types));
+    const Printer* printer = categoryPath ? FindPrinter(ObjectName(*categoryPath)) : nullptr;
+    if (!printer) return std::nullopt;
 
     CatalogItem item;
     item.id = id;
+    item.package = type.package;
     item.classPath = type.cls;
     item.pickup = RefPath(types.Prop(index, "PickupActor"));
-    item.en = texts.Localize(types.Prop(index, "Name"), Language::En);
-    item.ru = texts.Localize(types.Prop(index, "Name"), Language::Ru);
-    item.descRu = texts.Localize(types.Prop(index, "Description"), Language::Ru);
-    item.printer = PrinterOf(*category);
+    if (const Value* name = types.Prop(index, "Name")) item.nameText = *name;
+    if (const Value* description = types.Prop(index, "Description")) item.descriptionText = *description;
+    item.en = sources.texts.Localize(&item.nameText, kEnglish);
+    item.ru = sources.texts.Localize(&item.nameText, kRussian);
+    item.descRu = sources.texts.Localize(&item.descriptionText, kRussian);
+    item.descEn = sources.texts.Localize(&item.descriptionText, kEnglish);
+    item.printer = printer->key;
     const Value* seq = types.CatalogField(index, "CategorySequenceNumber");
     item.seq = Truthy(seq) ? *seq : Value::Number(0);
     const Value* varSeq = types.CatalogField(index, "VariationSequenceNumber");
     item.varSeq = Truthy(varSeq) ? *varSeq : Value::Number(0);
     const Value* cost = types.CatalogField(index, "UnlockCost");
     item.cost = cost && cost->type != Value::Type::Null ? *cost : Value::Number(kDefaultUnlockCost);
-    item.recipe = RecipeOf(index, types, texts);
+    item.recipe = RecipeOf(index, sources);
     item.iconPath = RefPath(types.Prop(index, "WidgetIcon"));
     if (item.iconPath) item.icon = ObjectName(*item.iconPath);
+
+    const auto mission = type.cls ? sources.rewardedBy.find(*type.cls) : sources.rewardedBy.end();
+    if (!Truthy(types.CatalogField(index, "bHiddenUntilUnlocked"))) {
+        item.unlock = "research";
+    } else if (mission != sources.rewardedBy.end()) {
+        item.unlock = "mission";
+        item.sourceText = mission->second->title;
+        item.source = MissionTitle(*mission->second, sources.texts, kRussian);
+        item.sourceEn = MissionTitle(*mission->second, sources.texts, kEnglish);
+    } else if (Truthy(types.CatalogField(index, "bPlayFabAccountBound"))) {
+        item.unlock = "event";
+    } else {
+        item.unlock = "hidden";
+    }
+    if (type.package.starts_with(kGlitchwalkersDir)) item.dlc = kGlitchwalkers;
     return item;
 }
 
-// byPrinterThenPosition: negative when a goes first.
+// Printer, then position in the printer's catalog, then among the item's variants; negative when a
+// goes first.
 double ComparePosition(const CatalogItem& a, const CatalogItem& b) {
-    if (a.printer != b.printer) return JsStringLess(b.printer, a.printer) ? 1 : -1;
+    if (a.printer != b.printer) return a.printer > b.printer ? 1 : -1;
     const double bySeq = ToJsNumber(&a.seq) - ToJsNumber(&b.seq);
     if (bySeq != 0 && !std::isnan(bySeq)) return bySeq;
     return ToJsNumber(&a.varSeq) - ToJsNumber(&b.varSeq);
 }
 
-// A stable merge sort. Unlike std::stable_sort it stays well-defined for any comparator, and for a
-// consistent one it gives the same order as JavaScript's (also stable) Array.prototype.sort.
+// A stable merge sort. Unlike std::stable_sort it stays well-defined even for a comparator that is
+// not a strict weak order (NaN positions in a malformed pak).
 template <class Compare>
 void StableSort(std::vector<size_t>& order, Compare compare) {
     std::vector<size_t> merged(order.size());
@@ -227,52 +234,24 @@ void StableSort(std::vector<size_t>& order, Compare compare) {
 
 }  // namespace
 
-std::vector<ItemType> ReadItemTypes(const Pak& pak, const Logger& log) {
-    std::vector<ItemType> itemTypes;
-    std::vector<std::string> failures;
-    std::vector<std::string> warnings;
-    for (const std::string& file : pak.Files()) {
-        if (!file.starts_with(kItemTypesDir) || !file.ends_with(kAssetExtension)) continue;
-        const std::string base = file.substr(0, file.size() - kAssetExtension.size());
-        const std::string key = base.substr(kItemTypesDir.size());
-        try {
-            const Bytes uasset = pak.Read(file);
-            const Bytes uexp = pak.Read(base + ".uexp");
-            const Asset asset = ParseAsset(uasset, uexp, PakPathToPackage(file));
-            itemTypes.push_back(ToItemType(key, asset));
-            for (const std::string& warning : asset.warnings) warnings.push_back(key + ": " + warning);
-        } catch (const std::exception& error) {
-            failures.push_back(key + ": " + error.what());
-        }
-    }
-
-    if (!warnings.empty()) {
-        log(std::to_string(warnings.size()) + " properties could not be read and are left out:");
-        LogList(log, warnings);
-    }
-    if (!failures.empty()) {
-        std::string message = std::to_string(failures.size()) + " item types could not be read:";
-        for (size_t k = 0; k < std::min(failures.size(), kMaxLinesShown); ++k) message += "\n  " + failures[k];
-        if (failures.size() > kMaxLinesShown) message += "\n  … and " + std::to_string(failures.size() - kMaxLinesShown) + " more";
-        throw ToolError(message);
-    }
-
-    // The Node step keeps them in a JavaScript object, which lists array-index keys first.
-    std::vector<std::string> keys;
-    for (const ItemType& type : itemTypes) keys.push_back(type.key);
-    std::vector<ItemType> ordered;
-    ordered.reserve(itemTypes.size());
-    for (size_t k : JsKeyOrder(keys)) ordered.push_back(std::move(itemTypes[k]));
-    log(std::to_string(ordered.size()) + " item types");
-    return ordered;
+std::string CleanDescription(const std::optional<std::string>& text) {
+    std::string description = text ? *text : std::string();
+    std::erase(description, '\r');
+    return std::string(JsTrim(description));
 }
 
-std::vector<CatalogItem> BuildCatalog(const Pak& pak, const std::vector<ItemType>& itemTypes, const Logger& log) {
-    TypeResolver types(itemTypes);
-    Localizer texts(pak, log);
+std::vector<CatalogItem> BuildCatalog(const GameAssets& assets, Localizer& texts, const Logger& log) {
+    TypeResolver types(assets.itemTypes);
+    std::unordered_map<std::string, const Mission*> rewardedBy;
+    for (const Mission& mission : assets.missions) {
+        for (const std::string& reward : mission.rewards) rewardedBy.try_emplace(reward, &mission);
+    }
+    std::vector<std::string> unknownIngredients;
+    Sources sources{types, texts, rewardedBy, unknownIngredients};
+
     std::vector<CatalogItem> unsorted;
-    for (size_t index = 0; index < itemTypes.size(); ++index) {
-        std::optional<CatalogItem> item = ToCatalogEntry(index, types, texts);
+    for (size_t index = 0; index < assets.itemTypes.size(); ++index) {
+        std::optional<CatalogItem> item = ToCatalogEntry(index, sources);
         if (item) unsorted.push_back(std::move(*item));
     }
 
@@ -284,6 +263,13 @@ std::vector<CatalogItem> BuildCatalog(const Pak& pak, const std::vector<ItemType
     for (size_t k : order) items.push_back(std::move(unsorted[k]));
 
     texts.ReportMisses();
+    if (!unknownIngredients.empty()) {
+        std::sort(unknownIngredients.begin(), unknownIngredients.end());
+        unknownIngredients.erase(std::unique(unknownIngredients.begin(), unknownIngredients.end()), unknownIngredients.end());
+        std::string line = "recipe ingredients without an item type in the pak (their asset name is shown):";
+        for (const std::string& classPath : unknownIngredients) line += " " + classPath;
+        log(line);
+    }
     log(std::to_string(items.size()) + " catalog items");
     return items;
 }
@@ -293,36 +279,44 @@ ResearchList BuildResearchList(const std::vector<CatalogItem>& catalog, const st
     ResearchList list;
     std::unordered_map<std::string, std::string> firstBySignature;
     std::string unclassified;
+    int withoutNameEn = 0;
+    int withoutDescriptionEn = 0;
     for (const CatalogItem& item : catalog) {
-        if (!(ToJsNumber(&item.cost) < kNotResearchableCost) || IsExcluded(item.id)) continue;
+        if (IsExcluded(item.id)) continue;
 
         // Two entries with the same name, cost and printer are most likely one item listed twice.
-        const std::string signature = (item.ru ? *item.ru : "null") + "|" + ToJsString(&item.cost) + "|" + item.printer;
+        const std::string signature = (item.ru ? *item.ru : "") + "|" + ToJsString(&item.cost) + "|" + item.printer;
         const auto [first, added] = firstBySignature.try_emplace(signature, item.id);
         if (!added) {
             log(first->second + " and " + item.id + " share name, cost and printer; "
-                "if one is a duplicate, add it to EXCLUDE in tools/lib/taxonomy.mjs");
+                "if one is a duplicate, add it to kExclude in overlay/extract/taxonomy.cpp");
         }
 
-        // RegExp.test(null) tests the string "null".
+        // An item without an English name is classified by its id; "null" matches no rule.
         const Classification classification = Classify(item.en ? *item.en : "null", item.id);
         if (!classification.group) unclassified += (unclassified.empty() ? "" : ", ") + item.id;
-        std::string description = item.descRu ? *item.descRu : std::string();
-        std::erase(description, '\r');
-        list.items.push_back({&item, std::string(JsTrim(description)), classification.group, classification.subgroup});
+        ResearchItem entry{&item, CleanDescription(item.descRu), CleanDescription(item.descEn), classification.group,
+                           classification.subgroup, classification.subgroupEn};
+        if (!item.en || JsTrim(*item.en).empty()) ++withoutNameEn;
+        if (entry.descriptionEn.empty()) ++withoutDescriptionEn;
+        list.items.push_back(std::move(entry));
     }
 
-    std::vector<std::string> iconNames;
     std::unordered_set<std::string> listed;
     for (const ResearchItem& entry : list.items) {
         const std::optional<std::string>& icon = entry.item->icon;
-        if (icon && !icon->empty() && decodedIcons.contains(*icon) && listed.insert(*icon).second) iconNames.push_back(*icon);
+        if (icon && !icon->empty() && decodedIcons.contains(*icon) && listed.insert(*icon).second) {
+            list.iconNames.push_back(*icon);
+        }
     }
-    // items.json keeps them in a JavaScript object, which lists array-index keys first.
-    for (size_t k : JsKeyOrder(iconNames)) list.iconNames.push_back(iconNames[k]);
 
     log(std::to_string(list.items.size()) + " research items, " + std::to_string(list.iconNames.size()) + " icons");
-    if (!unclassified.empty()) log("not in any group (add a rule in tools/lib/taxonomy.mjs): " + unclassified);
+    // The overlay shows the Russian text where the English one is missing.
+    if (withoutNameEn || withoutDescriptionEn) {
+        log(std::to_string(withoutNameEn) + " items have no English name and " + std::to_string(withoutDescriptionEn) +
+            " no English description");
+    }
+    if (!unclassified.empty()) log("not in any group (add a rule to kRules in overlay/extract/taxonomy.cpp): " + unclassified);
     return list;
 }
 

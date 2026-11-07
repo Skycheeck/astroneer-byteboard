@@ -30,7 +30,7 @@ IconPixels BuildIcons(const Pak& pak, const std::vector<CatalogItem>& catalog, c
         }
     }
 
-    // A FormatError leaves one icon out; any other error (a corrupt pak) stops the step, as in Node.
+    // A FormatError leaves one icon out; any other error (a corrupt pak) stops the step.
     IconPixels icons;
     std::vector<std::string> failures;
     for (const auto& [name, objectPath] : iconPaths) {

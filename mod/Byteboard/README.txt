@@ -6,7 +6,7 @@ It was tested in the game only in part. Use it at your own risk and back up your
 %LOCALAPPDATA%\Astro\Saved\SaveGames
 
 REQUIREMENTS
-- ASTRONEER on Windows, DirectX 11, single-player.
+- ASTRONEER on Windows, DirectX 11, single-player. Tested on ASTRONEER 1.42.3 only.
 - RE-UE4SS experimental 3.0.1-1183 or newer: https://github.com/UE4SS-RE/RE-UE4SS/releases
   (the UE4SS_v3.0.1-*.zip asset). Extract it next to Astro-Win64-Shipping.exe in
   <game>\Astro\Binaries\Win64, and in ue4ss\UE4SS-settings.ini set
@@ -19,11 +19,13 @@ INSTALL
    names, recipes and icons from your own game files into Byteboard\data (a few seconds).
 
 USE
-- The research catalog opens and closes with the backpack research catalog; F8 opens it by hand.
+- The research catalog opens and closes with the backpack research catalog.
 - Opening a printer shows its recipe list: click a researched item to select its recipe, then Print.
-- Research spends bytes, so it only works while the "Изучение разрешено" (research allowed)
+- Research spends bytes, so it only works while the "Research allowed"
   checkbox in the catalog window is ticked.
-- The interface is in Russian.
+- The interface follows the game's language: English, Russian, German, Spanish, French, Italian, Dutch, Polish, Brazilian Portuguese and Turkish.
+  Item names and descriptions come from your game; the interface texts in lang\ are translations
+  (corrections welcome).
 
 UNINSTALL
 Delete ue4ss\Mods\Byteboard. Items you researched stay researched in your save.

@@ -11,7 +11,9 @@ local selector = use("select")
 local M = {}
 
 local COMMAND_MAX_AGE_SECONDS = 8
-local ITEM_CLASS_PATH = "^/Game/Items/ItemTypes/[%w_/%-]+%.[%w_%-]+_C$"
+-- Item types live anywhere under /Game (rails, vehicles and expansion items are outside
+-- /Game/Items/ItemTypes).
+local ITEM_CLASS_PATH = "^/Game/[%w_/%-]+%.[%w_%-]+_C$"
 -- Items that exist only in Creative Mode; the game hides them in code, but ServerRequestUnlockItem
 -- would still unlock them. The extraction tools keep their own copy of this list.
 local CREATIVE_ONLY = { CreativeDroneIT_C = true }  -- Aero, the camera drone
@@ -26,6 +28,28 @@ local function done()
     return { ok = true, code = "ok" }
 end
 
+-- true when the game keeps the item hidden until a mission or an event unlocks it (the VTOL, the
+-- hoverboard, ...): it is not for sale, though ServerRequestUnlockItem would still unlock it. nil
+-- when the class defaults or their CatalogData cannot be read.
+local function hiddenUntilUnlocked(classPath)
+    local packagePath, className = classPath:match("^(.*)%.([^%.]+)$")
+    local defaults = packagePath and uobj.findValid(packagePath .. ".Default__" .. className)
+    if not defaults then
+        return nil
+    end
+    local ok, hidden = pcall(function()
+        local catalogData = defaults.CatalogData
+        if not uobj.valid(catalogData) then
+            return nil
+        end
+        return catalogData.bHiddenUntilUnlocked
+    end)
+    if ok and type(hidden) == "boolean" then
+        return hidden
+    end
+    return nil
+end
+
 local function unlock(cmd, controller)
     local className = cmd.arg:match("%.([%w_%-]+)$")
     if CREATIVE_ONLY[className] then
@@ -37,6 +61,12 @@ local function unlock(cmd, controller)
     local itemClass = uobj.findValid(cmd.arg)
     if not itemClass then
         return refuse("class_not_loaded", "class not loaded: " .. cmd.arg)
+    end
+    local hidden = hiddenUntilUnlocked(cmd.arg)
+    if hidden == true then
+        return refuse("not_for_sale", "the game unlocks this item through a mission or an event, not for bytes")
+    elseif hidden == nil then
+        protocol.logThrottled("cannot read CatalogData.bHiddenUntilUnlocked of " .. cmd.arg)
     end
     local research = uobj.researchSystem()
     if not research then

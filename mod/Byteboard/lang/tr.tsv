@@ -1,0 +1,139 @@
+# Byteboard interface translation: Turkish (tr).
+# One line per text: the English text, a tab, the translation. Keep %s and %d exactly; lines starting with # are comments.
+Purpose	Amaç
+All	Tümü
+Printed at	Yazdırma yeri
+Status	Durum
+%s left	%s kaldı
+Nothing found. Try another word or clear a filter.	Hiçbir şey bulunamadı. Başka bir kelime dene veya bir filtreyi kaldır.
+%s: all printers	%s: tüm yazıcılar
+%s. It cannot be bought for bytes.	%s. Bayt ile araştırılamaz.
+Research for %s	%s ile araştır
+Sent to the game, waiting for confirmation…	Oyuna gönderildi, onay bekleniyor…
+Waiting for the game to confirm "%s"…	Oyunun “%s” için onayı bekleniyor…
+No connection to the Byteboard Lua mod.	Byteboard Lua moduyla bağlantı yok.
+Research is off: tick "Research allowed" at the top.	Araştırma kapalı: üstteki “Araştırmaya izin ver” kutusunu işaretle.
+%s short.	%s eksik.
+Item	Öğe
+Select an item to see its description, recipe and the same item at other printers.	Açıklamasını, tarifini ve diğer yazıcılardaki aynı öğeyi görmek için bir öğe seç.
+Search also finds resources: "quartz" shows everything printed from it.	Arama kaynakları da bulur: “kuvars” ondan yazdırılan her şeyi gösterir.
+Cost	Maliyet
+Source	Köken
+Printer	Yazıcı
+Group	Grup
+Recipe	Tarif
+Description	Açıklama
+research catalog	araştırma kataloğu
+Name, resource or purpose: "battery", "lithium", "rover"…	Ad, kaynak veya amaç: “batarya”, “lityum”, “rover”…
+Affordable	Alınabilir
+Too expensive	Çok pahalı
+Rewards	Ödüller
+Researched	Araştırıldı
+Open in the catalog	Katalogda aç
+selecting on the printer…	yazıcıda seçiliyor…
+on the printer · %s	yazıcıda · %s
+selecting…	seçiliyor…
+Not enough resources or power	Yeterli kaynak veya enerji yok
+The printer's recipe is not recognised	Yazıcıdaki tarif tanınmadı
+No connection to the mod	Modla bağlantı yok
+PRINT	YAZDIR
+Ready to print	Yazdırmaya hazır
+Not researched	Araştırılmadı
+Nothing found.	Hiçbir şey bulunamadı.
+Search by name or resource…	Ada veya kaynağa göre ara…
+This printer is not recognised (%s).	Bu yazıcı tanınmadı (%s).
+Game error: %s	Oyun hatası: %s
+Failed: %s	Başarısız: %s
+The previous command has not been handled yet.	Önceki komut henüz işlenmedi.
+Could not write the command.	Komut yazılamadı.
+Researched in the game.	Oyunda araştırıldı.
+The game did not confirm the research within %s.	Oyun araştırmayı %s içinde onaylamadı.
+The mod did not answer within %s.	Mod %s içinde yanıt vermedi.
+Printing started	Yazdırma başladı
+The mod did not answer	Mod yanıt vermedi
+The mod did not understand the command.	Mod komutu anlamadı.
+The mod does not know this command.	Mod bu komutu tanımıyor.
+The command expired: the mod got it too late.	Komutun süresi doldu: mod onu çok geç aldı.
+No world is loaded yet.	Henüz bir dünya yüklenmedi.
+This item exists only in Creative Mode.	Bu öğe yalnızca Yaratıcı Mod’da var.
+A mission or an event unlocks this item, not bytes.	Bu öğenin kilidini bayt değil, bir görev veya etkinlik açar.
+Already researched in the game.	Oyunda zaten araştırılmış.
+The game has not loaded this item yet.	Oyun bu öğeyi henüz yüklemedi.
+No printer is open.	Açık bir yazıcı yok.
+The printer is still switching recipes.	Yazıcı hâlâ tarif değiştiriyor.
+This printer does not have this recipe.	Bu yazıcıda bu tarif yok.
+The printer was closed while the recipe was being selected.	Tarif seçilirken yazıcı kapatıldı.
+Another printer was opened while the recipe was being selected.	Tarif seçilirken başka bir yazıcı açıldı.
+Another recipe was selected.	Başka bir tarif seçildi.
+The recipe was not found in time.	Tarif zamanında bulunamadı.
+The printer stopped responding.	Yazıcı yanıt vermeyi bıraktı.
+The printer shows a different recipe.	Yazıcı farklı bir tarif gösteriyor.
+Not enough resources or power.	Yeterli kaynak veya enerji yok.
+Clear	Temizle
+BYTES	BAYT
+game connected	oyun bağlı
+no connection to the mod	modla bağlantı yok
+Research allowed	Araştırmaya izin ver
+researched	araştırıldı
+mission	görev
+event	etkinlik
+special	özel
+Mission reward	Görev ödülü
+Reward of the mission "%s"	“%s” görevinin ödülü
+Event reward, bound to the account	Etkinlik ödülü, hesaba bağlı
+Unlocked in the game in a special way	Oyunda özel bir yolla açılır
+Other	Diğer
+Other printer	Diğer yazıcı
+other	diğer
+Power	Enerji
+Oxygen	Oksijen
+Production	Üretim
+Storage	Depolama
+Platforms & Base	Platformlar ve üs
+Automation	Otomasyon
+Transport	Ulaşım
+Terraforming	Arazi düzenleme
+Exploration & Gear	Keşif ve ekipman
+Leisure & Decor	Eğlence ve dekor
+Backpack	Sırt Çantası
+backpack	sırt çantası
+Small Printer	Küçük Yazıcı
+small	küçük
+Medium Printer	Orta Yazıcı
+medium	orta
+Large Printer	Büyük Yazıcı
+large	büyük
+Terrain Tool Mods	Arazi aleti modları
+Mechanisms	Mekanizmalar
+Printers	Yazıcılar
+Solar Panels	Güneş panelleri
+Print Filters	Yazdırma filtreleri
+Tethers	Zincirler
+Scanners & Beacons	Tarayıcılar ve fenerler
+Batteries	Bataryalar
+Canisters	Tenekeler
+Generators	Jeneratörler
+Lights	Işıklar
+Explosives	Patlayıcılar
+Wind Turbines	Rüzgar türbinleri
+Movement	Hareket
+Trade & Packaging	Takas ve paketleme
+Shelters	Sığınaklar
+Platforms	Platformlar
+Shuttles	Mekikler
+Sensor Rings	Sensör çemberleri
+Landing Pads	İniş pistleri
+Vehicles	Araçlar
+Railway	Demiryolu
+Shredders	Parçalayıcılar
+Processing	İşleme
+Aircraft	Hava araçları
+Research	Araştırma
+Vehicle Attachments	Araç aksesuarları
+Sensors & Logic	Sensörler ve mantık
+Wiring	Kablolama
+Key Items	Anahtar öğeler
+Vehicle Drills	Araç matkapları
+Thrusters	İticiler
+Walkways	Yürüyüş yolları
+Megastructures	Mega-yapılar

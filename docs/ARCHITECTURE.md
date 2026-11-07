@@ -2,8 +2,7 @@
 
 Byteboard is one mod folder (`mod/Byteboard` here, `ue4ss/Mods/Byteboard` in the game) with two parts
 that never call each other: a Lua mod and an overlay DLL. They share files (`docs/PROTOCOL.md`). The
-DLL also extracts the data it shows from the game's own pak; `tools/` is the Node reference of that
-extraction for development.
+DLL also extracts the data it shows from the game's own pak (`overlay/extract`).
 
 ```
 game pak --> Byteboard.dll extract/ (first start, game update) --> data/catalog.tsv, taxonomy.tsv, icons.rgba
@@ -60,6 +59,7 @@ says which threads use it.
 | `extract/` | reads the pak (v11, zlib), cooked UE 4.27 packages, string tables, `.locres` and DXT textures; writes the three data files; never throws, bounds-checks every read | once |
 | `catalog` | loads `catalog.tsv` and `taxonomy.tsv` | once, then read-only |
 | `json` | a small JSON reader for the mod's files | any |
+| `lang` | the interface language (the game's, from `state.json`); Russian/English text pairs in the code, other languages from `lang/<locale>.tsv`; number format | render |
 | `bridge` | the overlay side of the protocol: state snapshots, signals, commands, allow-unlock | poll writes, render reads |
 | `hooks` | Present (vtable), window procedure (subclass), SetCursorPos/ClipCursor (import table) | game + render |
 | `render` | ImGui setup, input, the view state machine, drawing into the back buffer, fault guard | render |
@@ -85,23 +85,14 @@ Safety measures:
   the game.
 - One overlay per game process (named mutex).
 
+## Game data extraction: `overlay/extract/`
+
+The DLL and `byteboard-extract.exe` share this code. It finds every item type in the pak (any package with
+an `ItemCatalogData` export, plus their parent classes), keeps the items of the four printers, reads every
+mission for the items it rewards, and writes `catalog.tsv` (with how each item unlocks), `taxonomy.tsv` and
+`icons.rgba`. New items of a game update appear without a mod update; an item no group rule matches goes
+to the fallback group «Прочее».
+
 ## Tools: `tools/`
 
-Plain Node.js ESM, no npm dependencies, for development only: players never need Node. `extract.mjs` is the
-reference the DLL's extraction is checked against (the outputs must be identical byte for byte). It runs the
-steps in one process with one open pak;
-each step can also run alone (`node tools/steps/<step>.mjs`) and then reads the earlier steps' files from
-`data/`.
-
-| Step | Output |
-|---|---|
-| `steps/dump-itemtypes.mjs` | `data/itemtypes.json`: every item type blueprint in the pak |
-| `steps/build-catalog.mjs` | `data/catalog.json`: catalog items with names, costs, recipes, classes |
-| `steps/build-icons.mjs` | `data/icons.json`: 64×64 icons |
-| `steps/build-items.mjs` | `data/items.json`: the research entries with groups (`lib/taxonomy.mjs`) |
-| `steps/export-overlay.mjs` | `mod/Byteboard/data/`: `catalog.tsv`, `taxonomy.tsv`, `icons.rgba` |
-
-`lib/` holds the format readers (pak v11, cooked UE 4.27 packages, `.locres`, string tables, textures,
-DXT, PNG) and the taxonomy: purpose groups, printers and which items are research entries.
-
-`package.mjs` builds the release archive (see above).
+`package.mjs` (Node.js, development only) builds the release archive (see above).

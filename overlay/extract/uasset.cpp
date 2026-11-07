@@ -203,7 +203,7 @@ public:
         while (reader.Position() < end) {
             const std::optional<Tag> tag = ReadTag(reader);
             if (!tag) break;
-            // Node would seek back and could loop forever on a negative size.
+            // Seeking back for a negative size could loop forever.
             if (tag->size < 0) throw FormatError("property " + tag->name + " has a negative size");
             const int64_t valueEnd = reader.Position() + tag->size;
             try {

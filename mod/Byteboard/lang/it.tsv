@@ -1,0 +1,139 @@
+# Byteboard interface translation: Italian (it).
+# One line per text: the English text, a tab, the translation. Keep %s and %d exactly; lines starting with # are comments.
+Purpose	Funzione
+All	Tutti
+Printed at	Stampato con
+Status	Stato
+%s left	restano %s
+Nothing found. Try another word or clear a filter.	Nessun risultato. Prova un’altra parola o rimuovi un filtro.
+%s: all printers	%s: tutte le stampanti
+%s. It cannot be bought for bytes.	%s. Non si ottiene con i byte.
+Research for %s	Ricerca per %s
+Sent to the game, waiting for confirmation…	Inviato al gioco, in attesa di conferma…
+Waiting for the game to confirm "%s"…	In attesa che il gioco confermi «%s»…
+No connection to the Byteboard Lua mod.	Nessuna connessione con la mod Lua di Byteboard.
+Research is off: tick "Research allowed" at the top.	Ricerca disattivata: spunta «Ricerca consentita» in alto.
+%s short.	Mancano %s.
+Item	Oggetto
+Select an item to see its description, recipe and the same item at other printers.	Seleziona un oggetto per vederne descrizione, ricetta e lo stesso oggetto nelle altre stampanti.
+Search also finds resources: "quartz" shows everything printed from it.	Puoi cercare anche le risorse: «quarzo» mostra tutto ciò che si stampa con esso.
+Cost	Costo
+Source	Origine
+Printer	Stampante
+Group	Gruppo
+Recipe	Ricetta
+Description	Descrizione
+research catalog	catalogo di ricerca
+Name, resource or purpose: "battery", "lithium", "rover"…	Nome, risorsa o funzione: «batteria», «litio», «rover»…
+Affordable	Alla portata
+Too expensive	Troppo caro
+Rewards	Ricompense
+Researched	Ricercato
+Open in the catalog	Apri nel catalogo
+selecting on the printer…	selezione sulla stampante…
+on the printer · %s	sulla stampante · %s
+selecting…	selezione…
+Not enough resources or power	Risorse o energia insufficienti
+The printer's recipe is not recognised	Ricetta della stampante non riconosciuta
+No connection to the mod	Nessuna connessione con la mod
+PRINT	STAMPA
+Ready to print	Pronto per la stampa
+Not researched	Non ricercato
+Nothing found.	Nessun risultato.
+Search by name or resource…	Cerca per nome o risorsa…
+This printer is not recognised (%s).	Questa stampante non è riconosciuta (%s).
+Game error: %s	Errore del gioco: %s
+Failed: %s	Non riuscito: %s
+The previous command has not been handled yet.	Il comando precedente non è stato ancora elaborato.
+Could not write the command.	Impossibile scrivere il comando.
+Researched in the game.	Ricercato nel gioco.
+The game did not confirm the research within %s.	Il gioco non ha confermato la ricerca entro %s.
+The mod did not answer within %s.	La mod non ha risposto entro %s.
+Printing started	Stampa avviata
+The mod did not answer	La mod non ha risposto
+The mod did not understand the command.	La mod non ha capito il comando.
+The mod does not know this command.	La mod non conosce questo comando.
+The command expired: the mod got it too late.	Comando scaduto: la mod lo ha ricevuto troppo tardi.
+No world is loaded yet.	Nessun mondo ancora caricato.
+This item exists only in Creative Mode.	Questo oggetto esiste solo in modalità creativa.
+A mission or an event unlocks this item, not bytes.	Questo oggetto si sblocca con una missione o un evento, non con i byte.
+Already researched in the game.	Già ricercato nel gioco.
+The game has not loaded this item yet.	Il gioco non ha ancora caricato questo oggetto.
+No printer is open.	Nessuna stampante aperta.
+The printer is still switching recipes.	La stampante sta ancora cambiando ricetta.
+This printer does not have this recipe.	Questa stampante non ha questa ricetta.
+The printer was closed while the recipe was being selected.	La stampante è stata chiusa durante la selezione della ricetta.
+Another printer was opened while the recipe was being selected.	È stata aperta un’altra stampante durante la selezione della ricetta.
+Another recipe was selected.	È stata selezionata un’altra ricetta.
+The recipe was not found in time.	La ricetta non è stata trovata in tempo.
+The printer stopped responding.	La stampante ha smesso di rispondere.
+The printer shows a different recipe.	La stampante mostra un’altra ricetta.
+Not enough resources or power.	Risorse o energia insufficienti.
+Clear	Cancella
+BYTES	BYTE
+game connected	gioco connesso
+no connection to the mod	nessuna connessione con la mod
+Research allowed	Ricerca consentita
+researched	ricercato
+mission	missione
+event	evento
+special	speciale
+Mission reward	Ricompensa missione
+Reward of the mission "%s"	Ricompensa della missione «%s»
+Event reward, bound to the account	Ricompensa evento, legata all’account
+Unlocked in the game in a special way	Si sblocca nel gioco in modo speciale
+Other	Altro
+Other printer	Altra stampante
+other	altra
+Power	Energia
+Oxygen	Ossigeno
+Production	Produzione
+Storage	Stoccaggio
+Platforms & Base	Piattaforme e base
+Automation	Automazione
+Transport	Trasporti
+Terraforming	Terraformazione
+Exploration & Gear	Esplorazione e attrezzatura
+Leisure & Decor	Svago e decorazioni
+Backpack	Zaino
+backpack	zaino
+Small Printer	Stampante piccola
+small	piccola
+Medium Printer	Stampante media
+medium	media
+Large Printer	Stampante grande
+large	grande
+Terrain Tool Mods	Mod strumento terreno
+Mechanisms	Meccanismi
+Printers	Stampanti
+Solar Panels	Pannelli solari
+Print Filters	Filtri stampa
+Tethers	Tubi
+Scanners & Beacons	Scanner e fari
+Batteries	Batterie
+Canisters	Contenitori
+Generators	Generatori
+Lights	Luci
+Explosives	Esplosivi
+Wind Turbines	Turbine eoliche
+Movement	Movimento
+Trade & Packaging	Scambio e imballaggio
+Shelters	Rifugi
+Platforms	Piattaforme
+Shuttles	Navette
+Sensor Rings	Anelli sensore
+Landing Pads	Piste d’atterraggio
+Vehicles	Veicoli
+Railway	Ferrovia
+Shredders	Trituratori
+Processing	Lavorazione
+Aircraft	Velivoli
+Research	Ricerca
+Vehicle Attachments	Accessori per veicoli
+Sensors & Logic	Sensori e logica
+Wiring	Cablaggio
+Key Items	Oggetti chiave
+Vehicle Drills	Trivelle per veicoli
+Thrusters	Propulsori
+Walkways	Passerelle
+Megastructures	Megastrutture

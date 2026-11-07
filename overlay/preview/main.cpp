@@ -114,7 +114,7 @@ int wmain(int argc, wchar_t** argv) {
     const std::wstring binFolder(dll, slash + 1);
     if (!FileExists(binFolder + L"..\\..\\mod\\Byteboard\\data\\catalog.tsv")) {
         fprintf(stderr, "mod\\Byteboard\\data\\catalog.tsv is missing: run \"overlay\\bin\\byteboard-extract.exe <pak> "
-                        "mod\\Byteboard\\data\" (or \"node tools/extract.mjs\") in the repository first\n");
+                        "mod\\Byteboard\\data\" in the repository first\n");
         return 1;
     }
     if (wcscpy_s(slash + 1, MAX_PATH - (slash + 1 - dll), L"ByteboardPreview.dll") != 0) {

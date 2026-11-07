@@ -37,6 +37,7 @@ struct Live {
     std::string printerCurrent;  // ClassKey of the open printer's recipe; empty when no printer is open
     std::vector<std::optional<int>> printerHave;  // per ingredient, in recipe order; empty optional = not readable
     bool printerCanPrint = true;
+    std::string language;  // the game's display language ("ru", "en", ...); empty while unknown
     bool polled = false;  // false until the poll thread has read the files once
 };
 

@@ -1,6 +1,8 @@
 #include "texts.h"
 
+#include <algorithm>
 #include <cstring>
+#include <string_view>
 
 #include "uasset.h"
 
@@ -8,8 +10,9 @@ namespace rd::extract {
 
 namespace {
 
-constexpr const char* kLocresEn = "Astro/Content/Localization/Game/en/Game.locres";
-constexpr const char* kLocresRu = "Astro/Content/Localization/Game/ru/Game.locres";
+// Localization/Game/<locale>/Game.locres
+constexpr std::string_view kLocresDir = "Astro/Content/Localization/Game/";
+constexpr std::string_view kLocresFile = "/Game.locres";
 
 // FGuid(0x7574140E, 0xFC034A67, 0x9D90154A, 0x1B7F37C3), stored as four little-endian uint32.
 constexpr uint8_t kLocresMagic[16] = {0x0E, 0x14, 0x74, 0x75, 0x67, 0x4A, 0x03, 0xFC,
@@ -18,11 +21,43 @@ constexpr uint8_t kVersionOptimizedCrc32 = 2;
 constexpr uint8_t kVersionOptimizedCityHash64 = 3;
 constexpr int64_t kNoStringArray = -1;
 
+std::string LocresPath(const std::string& locale) {
+    return std::string(kLocresDir) + locale + std::string(kLocresFile);
+}
+
 }  // namespace
 
+std::vector<std::string> GameLanguages(const Pak& pak) {
+    std::vector<std::string> languages;
+    for (const std::string& file : pak.Files()) {
+        if (!file.starts_with(kLocresDir) || !file.ends_with(kLocresFile)) continue;
+        const std::string locale = file.substr(kLocresDir.size(), file.size() - kLocresDir.size() - kLocresFile.size());
+        if (!locale.empty() && locale.find('/') == std::string::npos) languages.push_back(locale);
+    }
+    std::sort(languages.begin(), languages.end());
+    languages.erase(std::unique(languages.begin(), languages.end()), languages.end());
+    return languages;
+}
+
 Localizer::Localizer(const Pak& pak, const Logger& log) : pak_(pak), log_(log) {
-    en_ = ParseLocres(pak.Read(kLocresEn));
-    ru_ = ParseLocres(pak.Read(kLocresRu));
+    locres_[kEnglish] = ParseLocres(pak.Read(LocresPath(kEnglish)));
+    locres_[kRussian] = ParseLocres(pak.Read(LocresPath(kRussian)));
+}
+
+bool Localizer::AddLanguage(const std::string& locale) {
+    if (locres_.contains(locale)) return true;
+    const std::string file = LocresPath(locale);
+    if (!pak_.Contains(file)) {
+        log_(locale + ": the pak has no " + file + "; the language is left out");
+        return false;
+    }
+    try {
+        locres_[locale] = ParseLocres(pak_.Read(file));
+        return true;
+    } catch (const std::exception& error) {
+        log_(locale + ": " + file + " could not be read (" + error.what() + "); the language is left out");
+        return false;
+    }
 }
 
 // A compiled localization file as UE 4.27 writes it (FTextLocalizationResource::LoadFromArchive),
@@ -112,11 +147,28 @@ const std::string* Localizer::Find(const Locres& locres, const std::string& ns, 
     return entry == entries->second.end() ? nullptr : &entry->second;
 }
 
-std::optional<std::string> Localizer::Localize(const Value* text, Language language) {
+std::optional<std::string> Localizer::Localize(const Value* text, const std::string& locale) {
+    return Resolve(text, locale, Fallback::Key);
+}
+
+std::optional<std::string> Localizer::Translate(const Value* text, const std::string& locale) {
+    std::optional<std::string> result = Resolve(text, locale, Fallback::Source);
+    if (result && result->empty()) return std::nullopt;
+    return result;
+}
+
+std::optional<std::string> Localizer::InLanguage(const Value* text, const std::string& locale) {
+    std::optional<std::string> result = Resolve(text, locale, Fallback::None);
+    if (result && result->empty()) return std::nullopt;
+    return result;
+}
+
+std::optional<std::string> Localizer::Resolve(const Value* text, const std::string& locale, Fallback fallback) {
     if (!text || text->type == Value::Type::Null) return std::nullopt;
     if (text->type == Value::Type::String) return text->string;  // a culture-invariant text
-    const Locres& strings = language == Language::En ? en_ : ru_;
-    std::unordered_set<std::string>& untranslated = untranslated_[language == Language::En ? 0 : 1];
+    const auto found = locres_.find(locale);
+    if (found == locres_.end()) return std::nullopt;  // a language that was not loaded
+    const Locres& strings = found->second;
 
     if (const Value* tableValue = text->Get("table")) {
         const std::string tablePath = ToJsString(tableValue);
@@ -124,12 +176,14 @@ std::optional<std::string> Localizer::Localize(const Value* text, Language langu
         if (const StringTable* table = StringTableAt(tablePath)) {
             const std::string* localized = Find(strings, table->ns, key);
             if (localized && !localized->empty()) return *localized;
+            if (fallback == Fallback::None) return std::nullopt;
             const auto source = table->entries.find(key);
             if (source != table->entries.end() && !source->second.empty()) {
-                untranslated.insert(tablePath + " " + key);
+                untranslated_[locale].insert(tablePath + " " + key);
                 return source->second;
             }
         }
+        if (fallback != Fallback::Key) return std::nullopt;
         if (unresolved_.insert(tablePath + " " + key).second) unresolvedInOrder_.push_back(tablePath + " " + key);
         return key;
     }
@@ -139,8 +193,9 @@ std::optional<std::string> Localizer::Localize(const Value* text, Language langu
         const std::string key = ToJsString(keyValue);
         const std::string* localized = Find(strings, ns, key);
         if (localized && !localized->empty()) return *localized;
+        if (fallback == Fallback::None) return std::nullopt;
         const Value* source = text->Get("src");
-        if (Truthy(source)) untranslated.insert(ns + " " + key);
+        if (Truthy(source)) untranslated_[locale].insert(ns + " " + key);
         if (!source || source->type == Value::Type::Null) return std::nullopt;
         return ToJsString(source);
     }
@@ -148,11 +203,9 @@ std::optional<std::string> Localizer::Localize(const Value* text, Language langu
 }
 
 void Localizer::ReportMisses() const {
-    const char* languages[2] = {"en", "ru"};
-    for (int k = 0; k < 2; ++k) {
-        if (!untranslated_[k].empty()) {
-            log_(std::to_string(untranslated_[k].size()) + " texts have no " + languages[k] +
-                 " translation and use the source string");
+    for (const auto& [locale, keys] : untranslated_) {
+        if (!keys.empty()) {
+            log_(std::to_string(keys.size()) + " texts have no " + locale + " translation and use the source string");
         }
     }
     if (!unresolvedInOrder_.empty()) {

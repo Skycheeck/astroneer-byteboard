@@ -1,5 +1,5 @@
 // Preview support, linked only into ByteboardPreview.dll (see CMakeLists.txt): preview.exe
-// opens the overlay on a chosen view without the F8 key or a game signal, and the DLL saves one
+// opens the overlay on a chosen view without a game signal, and the DLL saves one
 // frame as a BMP. The game DLL has no exports.
 // Threads: preview.exe calls Byteboard_Preview from the thread that presents its frames, so
 // everything here runs on the overlay's render thread.
